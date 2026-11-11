@@ -9,7 +9,7 @@
     script-src 'self' 'unsafe-inline' https://unpkg.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;
     font-src https://fonts.gstatic.com;
-    img-src 'self' blob: data: https://tile.openstreetmap.org;
+    img-src 'self' blob: data: https://tile.openstreetmap.org https://server.arcgisonline.com https://*.tile.opentopomap.org;
     connect-src 'self' blob: https://nominatim.openstreetmap.org;
   ">
   <title>Mapa de Momentos</title>
@@ -132,6 +132,97 @@
     /* Tema escuro do mapa: inverte só os tiles; marcadores e controles ficam fora do tile pane */
     #map-view.map-dark .leaflet-tile-pane {
       filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.7);
+    }
+
+    /* Seletor de tipo de mapa (abaixo do zoom) */
+    .map-style-control {
+      position: relative;
+      margin-top: 8px !important;
+      margin-left: max(16px, env(safe-area-inset-left, 16px)) !important;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle) !important;
+      border-radius: var(--radius-md) !important;
+      box-shadow: var(--shadow-sm) !important;
+    }
+    .map-style-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      color: var(--text-main);
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+    }
+    .map-style-btn[aria-expanded="true"] {
+      color: var(--accent);
+    }
+    .map-style-menu {
+      position: absolute;
+      top: -1px;
+      left: calc(100% + 8px);
+      min-width: 168px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+    }
+    .map-style-menu[hidden] {
+      display: none;
+    }
+    .map-style-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      min-height: 44px;
+      padding: 6px 10px;
+      background: transparent;
+      color: var(--text-main);
+      border: none;
+      border-radius: var(--radius-sm);
+      font: inherit;
+      font-size: 14px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .map-style-option:hover {
+      background: var(--bg-surface-elevated);
+    }
+    .map-style-option[aria-checked="true"] {
+      background: var(--accent-light);
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .map-style-swatch {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+    }
+    .swatch-standard  { background: linear-gradient(135deg, #f2efe9 50%, #aad3df 50%); }
+    .swatch-satellite { background: linear-gradient(135deg, #2f4a2c 50%, #1d3a52 50%); }
+    .swatch-hybrid    { background: linear-gradient(135deg, #2f4a2c 50%, #1d3a52 50%); box-shadow: inset 0 0 0 5px rgba(255,255,255,0.28); }
+    .swatch-terrain   { background: linear-gradient(135deg, #d9c9a3 50%, #9bbf8a 50%); }
+
+    /* Botão "minha localização" pulsa enquanto busca o sinal */
+    #btn-locate-me[aria-busy="true"] svg {
+      animation: locate-pulse 1s ease-in-out infinite;
+      color: var(--accent);
+    }
+    @keyframes locate-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #btn-locate-me[aria-busy="true"] svg { animation: none; }
     }
 
     /* Estilização Customizada Leaflet */
@@ -987,7 +1078,7 @@
     .toast-message {
       background: var(--text-main);
       color: var(--bg-page);
-      border-radius: var(--radius-full);
+      border-radius: var(--radius-lg);
       padding: 10px 18px;
       font-size: 13px;
       font-weight: 500;
@@ -1310,7 +1401,53 @@
       NOMINATIM_DEBOUNCE_MS: 800,
       DEFAULT_COORDS: [-14.235, -51.925], // Centro geográfico aproximado do Brasil
       DEFAULT_ZOOM: 5,
-      FOCUSED_ZOOM: 16
+      FOCUSED_ZOOM: 16,
+      MAP_MAX_ZOOM: 19,
+
+      // Geolocalização: primeiro um fix rápido (rede/Wi-Fi), depois refino por GPS em segundo plano
+      GEO_FAST_TIMEOUT_MS: 8000,
+      GEO_FAST_MAX_AGE_MS: 300000,
+      GEO_REFINE_TIMEOUT_MS: 15000,
+      GEO_COARSE_ACCURACY_M: 1000, // acima disso o zoom é mais aberto
+      GEO_COARSE_ZOOM: 14,
+      GEO_MAX_CIRCLE_M: 3000,      // não desenha círculo de precisão absurdo
+
+      // Tipos de mapa: nenhum exige chave de API. Imagens de satélite/rótulos: Esri (exigem atribuição).
+      MAP_STYLE_DEFAULT: 'standard',
+      MAP_STYLES: {
+        standard: {
+          label: 'Padrão',
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" rel="noopener noreferrer">OpenStreetMap</a>',
+          layers: [{ url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png' }]
+        },
+        satellite: {
+          label: 'Satélite',
+          attribution: 'Imagens &copy; Esri, Maxar, Earthstar Geographics',
+          layers: [{
+            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            maxNativeZoom: 18
+          }]
+        },
+        hybrid: {
+          label: 'Híbrido',
+          attribution: 'Imagens e rótulos &copy; Esri, Maxar, Earthstar Geographics',
+          layers: [
+            {
+              url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+              maxNativeZoom: 18
+            },
+            {
+              url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+              maxNativeZoom: 18
+            }
+          ]
+        },
+        terrain: {
+          label: 'Relevo',
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" rel="noopener noreferrer">OpenStreetMap</a>, SRTM | &copy; <a href="https://opentopomap.org" rel="noopener noreferrer">OpenTopoMap</a> (CC-BY-SA)',
+          layers: [{ url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', subdomains: 'abc', maxNativeZoom: 17 }]
+        }
+      }
     };
 
     // -------------------------------------------------------------
@@ -1755,6 +1892,7 @@
     // -------------------------------------------------------------
     const AppState = {
       theme: 'light',
+      mapStyle: CONFIG.MAP_STYLE_DEFAULT,
       currentView: 'map', // 'map' | 'list'
       moments: [],
       activeMoment: null,
@@ -1784,7 +1922,7 @@
     // 6. UI: TOASTS & MODAIS DE CONFIRMAÇÃO
     // -------------------------------------------------------------
     const UI = {
-      showToast(message) {
+      showToast(message, durationMs = 3200) {
         const container = document.getElementById('toast-container');
         const toast = document.createElement('div');
         toast.className = 'toast-message';
@@ -1797,8 +1935,8 @@
 
         setTimeout(() => {
           toast.classList.remove('show');
-          setTimeout(() => container.removeChild(toast), 300);
-        }, 3200);
+          setTimeout(() => toast.remove(), 300);
+        }, durationMs);
       },
 
       confirm(title, message, okText = 'Continuar') {
@@ -1835,18 +1973,24 @@
     // -------------------------------------------------------------
     const MapController = {
       map: null,
-      tileLayer: null,
+      tileLayers: [],
       userLocationMarker: null,
+      accuracyCircle: null,
       selectionMarker: null,
       markersMap: new Map(),
+      userInteracted: false, // true depois que a pessoa arrasta/zooma: a partir daí o mapa não é recentrado sozinho
+      styleMenuEl: null,
+      styleButtonEl: null,
 
       init() {
         this.map = L.map('map-view', {
           zoomControl: true,
-          attributionControl: true
+          attributionControl: true,
+          maxZoom: CONFIG.MAP_MAX_ZOOM
         }).setView(CONFIG.DEFAULT_COORDS, CONFIG.DEFAULT_ZOOM);
 
         this.updateTiles(AppState.theme);
+        this.addStyleControl();
 
         // Clique no mapa durante edição/criação posiciona o pin
         this.map.on('click', (e) => {
@@ -1855,24 +1999,177 @@
             this.setPinCoordinates(e.latlng.lat, e.latlng.lng, true);
           }
         });
+
+        // Eventos de ponteiro/roda no container (e não 'movestart') porque setView/flyTo também disparam movestart
+        const container = this.map.getContainer();
+        const markInteracted = () => { this.userInteracted = true; };
+        container.addEventListener('pointerdown', markInteracted, { passive: true });
+        container.addEventListener('wheel', markInteracted, { passive: true });
       },
 
       updateTiles(theme) {
-        if (this.tileLayer) {
-          this.map.removeLayer(this.tileLayer);
+        for (const layer of this.tileLayers) {
+          this.map.removeLayer(layer);
         }
+        this.tileLayers = [];
 
-        // OSM não exige chave. A CARTO passou a exigir API key nos tiles raster gratuitos.
-        // O tema escuro é feito por filtro CSS no tile pane (classe no container do mapa), pois OSM só tem estilo claro.
-        this.map.getContainer().classList.toggle('map-dark', theme === 'dark');
+        const style = CONFIG.MAP_STYLES[AppState.mapStyle] || CONFIG.MAP_STYLES[CONFIG.MAP_STYLE_DEFAULT];
 
-        this.tileLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" rel="noopener noreferrer">OpenStreetMap</a>'
-        }).addTo(this.map);
+        // O tema escuro é um filtro CSS nos tiles do mapa padrão (OSM só tem estilo claro).
+        // Satélite/relevo já têm aparência própria e não são invertidos.
+        const invert = theme === 'dark' && AppState.mapStyle === 'standard';
+        this.map.getContainer().classList.toggle('map-dark', invert);
+
+        // Só a primeira camada carrega a atribuição: no híbrido, rótulos e imagem são da mesma fonte
+        style.layers.forEach((def, index) => {
+          const layer = L.tileLayer(def.url, {
+            maxZoom: CONFIG.MAP_MAX_ZOOM,
+            maxNativeZoom: def.maxNativeZoom || CONFIG.MAP_MAX_ZOOM,
+            subdomains: def.subdomains || 'abc',
+            attribution: index === 0 ? style.attribution : ''
+          }).addTo(this.map);
+          this.tileLayers.push(layer);
+        });
       },
 
-      setUserLocation(lat, lng) {
+      setMapStyle(key) {
+        if (!Object.prototype.hasOwnProperty.call(CONFIG.MAP_STYLES, key)) return;
+        AppState.mapStyle = key;
+        try {
+          localStorage.setItem('momentos_map_style', key);
+        } catch {}
+        this.updateTiles(AppState.theme);
+        this.syncStyleMenu();
+      },
+
+      // Botão "tipo de mapa" logo abaixo do zoom, com um menu de opções ao lado
+      addStyleControl() {
+        const SVG_NS = 'http://www.w3.org/2000/svg';
+        const self = this;
+
+        const StyleControl = L.Control.extend({
+          options: { position: 'topleft' },
+          onAdd() {
+            const wrap = document.createElement('div');
+            wrap.className = 'leaflet-bar map-style-control';
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'map-style-btn';
+            btn.setAttribute('aria-label', 'Tipo de mapa');
+            btn.setAttribute('aria-haspopup', 'true');
+            btn.setAttribute('aria-expanded', 'false');
+
+            const svg = document.createElementNS(SVG_NS, 'svg');
+            svg.setAttribute('width', '18');
+            svg.setAttribute('height', '18');
+            svg.setAttribute('viewBox', '0 0 24 24');
+            svg.setAttribute('fill', 'none');
+            svg.setAttribute('stroke', 'currentColor');
+            svg.setAttribute('stroke-width', '1.8');
+            svg.setAttribute('stroke-linecap', 'round');
+            svg.setAttribute('stroke-linejoin', 'round');
+            ['m12 2 10 5-10 5L2 7z', 'm2 12 10 5 10-5', 'm2 17 10 5 10-5'].forEach((d) => {
+              const p = document.createElementNS(SVG_NS, 'path');
+              p.setAttribute('d', d);
+              svg.appendChild(p);
+            });
+            btn.appendChild(svg);
+
+            const menu = document.createElement('div');
+            menu.className = 'map-style-menu';
+            menu.setAttribute('role', 'radiogroup');
+            menu.setAttribute('aria-label', 'Tipo de mapa');
+            menu.hidden = true;
+
+            for (const [key, def] of Object.entries(CONFIG.MAP_STYLES)) {
+              const opt = document.createElement('button');
+              opt.type = 'button';
+              opt.className = 'map-style-option';
+              opt.dataset.style = key;
+              opt.setAttribute('role', 'radio');
+
+              const swatch = document.createElement('span');
+              swatch.className = `map-style-swatch swatch-${key}`;
+              const label = document.createElement('span');
+              label.textContent = def.label;
+              opt.appendChild(swatch);
+              opt.appendChild(label);
+
+              opt.addEventListener('click', () => {
+                self.setMapStyle(key);
+                self.closeStyleMenu();
+              });
+              menu.appendChild(opt);
+            }
+
+            btn.addEventListener('click', () => {
+              if (menu.hidden) self.openStyleMenu();
+              else self.closeStyleMenu();
+            });
+
+            // Impede que cliques/rolagem no controle movam o mapa ou posicionem o pin
+            L.DomEvent.disableClickPropagation(wrap);
+            L.DomEvent.disableScrollPropagation(wrap);
+
+            // Fecha ao tocar fora do controle
+            document.addEventListener('pointerdown', (e) => {
+              if (!menu.hidden && !wrap.contains(e.target)) self.closeStyleMenu();
+            });
+
+            wrap.appendChild(btn);
+            wrap.appendChild(menu);
+            self.styleMenuEl = menu;
+            self.styleButtonEl = btn;
+            return wrap;
+          }
+        });
+
+        this.map.addControl(new StyleControl());
+        this.syncStyleMenu();
+      },
+
+      syncStyleMenu() {
+        if (!this.styleMenuEl) return;
+        this.styleMenuEl.querySelectorAll('.map-style-option').forEach((opt) => {
+          opt.setAttribute('aria-checked', String(opt.dataset.style === AppState.mapStyle));
+        });
+      },
+
+      openStyleMenu() {
+        if (!this.styleMenuEl) return;
+        this.styleMenuEl.hidden = false;
+        this.styleButtonEl.setAttribute('aria-expanded', 'true');
+      },
+
+      closeStyleMenu() {
+        if (!this.styleMenuEl || this.styleMenuEl.hidden) return false;
+        this.styleMenuEl.hidden = true;
+        this.styleButtonEl.setAttribute('aria-expanded', 'false');
+        return true;
+      },
+
+      setUserLocation(lat, lng, accuracy) {
+        // Círculo de precisão: dá noção do quão confiável é o ponto (fix por rede costuma ter centenas de metros)
+        if (Number.isFinite(accuracy) && accuracy > 0 && accuracy <= CONFIG.GEO_MAX_CIRCLE_M) {
+          if (this.accuracyCircle) {
+            this.accuracyCircle.setLatLng([lat, lng]).setRadius(accuracy);
+          } else {
+            this.accuracyCircle = L.circle([lat, lng], {
+              radius: accuracy,
+              interactive: false,
+              color: '#2b70c9',
+              weight: 1,
+              opacity: 0.5,
+              fillColor: '#2b70c9',
+              fillOpacity: 0.1
+            }).addTo(this.map);
+          }
+        } else if (this.accuracyCircle) {
+          this.map.removeLayer(this.accuracyCircle);
+          this.accuracyCircle = null;
+        }
+
         if (this.userLocationMarker) {
           this.userLocationMarker.setLatLng([lat, lng]);
         } else {
@@ -2082,6 +2379,7 @@
     const ViewController = {
       async init() {
         this.bindEvents();
+        this.loadMapStylePreference();
         // O mapa precisa existir antes de tema/localização/marcadores, que dependem de MapController.map
         MapController.init();
         this.setupTheme();
@@ -2094,6 +2392,16 @@
           console.error('Falha ao carregar momentos:', err);
           UI.showToast('Não foi possível acessar o armazenamento local do navegador.');
         }
+      },
+
+      // Valor salvo é entrada não confiável: só aceita chaves que existem em MAP_STYLES
+      loadMapStylePreference() {
+        try {
+          const saved = localStorage.getItem('momentos_map_style');
+          if (saved && Object.prototype.hasOwnProperty.call(CONFIG.MAP_STYLES, saved)) {
+            AppState.mapStyle = saved;
+          }
+        } catch {}
       },
 
       setupTheme() {
@@ -2132,32 +2440,67 @@
         this.requestGeolocation(false);
       },
 
+      // Estratégia em duas etapas: um fix rápido (rede/Wi-Fi, aceita cache recente) centraliza o mapa logo;
+      // em seguida um fix de alta precisão (GPS) refina o ponto em segundo plano.
+      // Erros são sempre mostrados: antes, na abertura do app, eles eram silenciosos e parecia "não funcionar".
       requestGeolocation(userInitiated = false) {
         if (!navigator.geolocation) {
-          if (userInitiated) UI.showToast('Geolocalização não é suportada neste navegador.');
+          UI.showToast('Este navegador não oferece geolocalização.');
           return;
         }
 
+        const locateBtn = document.getElementById('btn-locate-me');
+        locateBtn.setAttribute('aria-busy', 'true');
+        const done = () => locateBtn.removeAttribute('aria-busy');
+
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            const { latitude, longitude } = pos.coords;
-            MapController.setUserLocation(latitude, longitude);
-            MapController.map.setView([latitude, longitude], CONFIG.FOCUSED_ZOOM);
-            try {
-              localStorage.setItem('momentos_last_loc', JSON.stringify({ lat: latitude, lng: longitude }));
-            } catch {}
-            if (userInitiated) UI.showToast('Localização atualizada.');
+            done();
+            this.applyUserPosition(pos, userInitiated);
+            if (userInitiated) UI.showToast('Mapa centralizado na sua localização.');
+
+            // O refino é opcional: se falhar, o fix rápido já está no mapa
+            navigator.geolocation.getCurrentPosition(
+              (precise) => this.applyUserPosition(precise, false),
+              (refineErr) => console.warn('Refino de localização indisponível:', refineErr.message),
+              { enableHighAccuracy: true, timeout: CONFIG.GEO_REFINE_TIMEOUT_MS, maximumAge: 0 }
+            );
           },
           (err) => {
-            if (userInitiated) {
-              let msg = 'Erro ao obter localização.';
-              if (err.code === err.PERMISSION_DENIED) msg = 'Permissão de localização negada.';
-              else if (err.code === err.TIMEOUT) msg = 'Tempo esgotado ao buscar sinal GPS.';
-              UI.showToast(msg);
-            }
+            done();
+            UI.showToast(this.describeGeolocationError(err), 6000);
           },
-          { timeout: 10000, enableHighAccuracy: true, maximumAge: 60000 }
+          { enableHighAccuracy: false, timeout: CONFIG.GEO_FAST_TIMEOUT_MS, maximumAge: CONFIG.GEO_FAST_MAX_AGE_MS }
         );
+      },
+
+      applyUserPosition(pos, forceCenter) {
+        const { latitude, longitude, accuracy } = pos.coords;
+        MapController.setUserLocation(latitude, longitude, accuracy);
+
+        try {
+          localStorage.setItem('momentos_last_loc', JSON.stringify({ lat: latitude, lng: longitude }));
+        } catch {}
+
+        // Não puxa o mapa de volta se a pessoa já navegou, ou se está posicionando o pin no formulário
+        const formOpen = document.getElementById('form-panel').classList.contains('active');
+        if (formOpen || (!forceCenter && MapController.userInteracted)) return;
+
+        const zoom = accuracy > CONFIG.GEO_COARSE_ACCURACY_M ? CONFIG.GEO_COARSE_ZOOM : CONFIG.FOCUSED_ZOOM;
+        MapController.map.setView([latitude, longitude], zoom, { animate: true });
+        if (forceCenter) MapController.userInteracted = false;
+      },
+
+      describeGeolocationError(err) {
+        if (err.code === err.PERMISSION_DENIED) {
+          // Em origens inseguras (ex.: http em IP de rede) o navegador nega sem nem perguntar
+          if (!window.isSecureContext) {
+            return 'Localização só funciona em https ou localhost. Abra o app por um desses endereços.';
+          }
+          return 'Localização bloqueada. Libere no cadeado ao lado do endereço e toque em "Minha localização".';
+        }
+        if (err.code === err.TIMEOUT) return 'Tempo esgotado ao buscar sua localização. Toque em "Minha localização" para tentar de novo.';
+        return 'Não foi possível determinar sua posição. Verifique GPS e conexão.';
       },
 
       async loadAndRenderMoments() {
@@ -2768,6 +3111,7 @@
         // Tecla ESC global para fechar modais/painéis
         window.addEventListener('keydown', (e) => {
           if (e.key === 'Escape') {
+            if (MapController.closeStyleMenu()) return;
             if (document.getElementById('lightbox-modal').classList.contains('active')) {
               document.getElementById('lightbox-modal').classList.remove('active');
             } else {
