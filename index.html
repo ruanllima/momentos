@@ -9,7 +9,8 @@
     script-src 'self' 'unsafe-inline' https://unpkg.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;
     font-src https://fonts.gstatic.com;
-img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgisonline.com https://*.tile.opentopomap.org https://*.basemaps.cartocdn.com;    connect-src 'self' blob: https://nominatim.openstreetmap.org;
+    img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgisonline.com https://*.tile.opentopomap.org https://*.basemaps.cartocdn.com;
+    connect-src 'self' blob: https://nominatim.openstreetmap.org;
   ">
   <title>Mapa de Momentos</title>
 
@@ -61,7 +62,7 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       --z-map: 1;
       --z-nav: 400;
       --z-fab: 500;
-      --z-list: 550; /* acima do dock e do header, abaixo dos painéis */
+      --z-list: 550;
       --z-panel: 600;
       --z-toast: 1000;
       --z-modal: 1100;
@@ -128,12 +129,12 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       background-color: var(--bg-subtle);
     }
 
-    /* Tema escuro do mapa: inverte só os tiles; marcadores e controles ficam fora do tile pane */
+    /* Tema escuro do mapa: inverte os tiles claros do mapa padrão */
     #map-view.map-dark .leaflet-tile-pane {
       filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.7);
     }
 
-    /* Seletor de tipo de mapa (abaixo do zoom) */
+    /* Seletor de tipo de mapa */
     .map-style-control {
       position: relative;
       margin-top: 8px !important;
@@ -206,12 +207,12 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       border-radius: 6px;
       border: 1px solid var(--border-subtle);
     }
-    .swatch-standard  { background: linear-gradient(135deg, #f2efe9 50%, #aad3df 50%); }
+    .swatch-standard  { background: linear-gradient(135deg, #fbf9f5 50%, #e2ded5 50%); }
+    .swatch-detailed  { background: linear-gradient(135deg, #f2efe9 50%, #aad3df 50%); }
     .swatch-satellite { background: linear-gradient(135deg, #2f4a2c 50%, #1d3a52 50%); }
     .swatch-hybrid    { background: linear-gradient(135deg, #2f4a2c 50%, #1d3a52 50%); box-shadow: inset 0 0 0 5px rgba(255,255,255,0.28); }
-    .swatch-terrain   { background: linear-gradient(135deg, #d9c9a3 50%, #9bbf8a 50%); }
 
-    /* Botão "minha localização" pulsa enquanto busca o sinal */
+    /* Botão "minha localização" */
     #btn-locate-me[aria-busy="true"] svg {
       animation: locate-pulse 1s ease-in-out infinite;
       color: var(--accent);
@@ -708,7 +709,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       transition: transform var(--transition-fast);
     }
 
-    /* Mobile First: Bottom Sheet */
     @media (max-width: 767px) {
       .slide-panel {
         left: 0;
@@ -721,9 +721,11 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       .slide-panel.active {
         transform: translateY(0);
       }
+      #form-panel {
+        max-height: 58dvh;
+      }
     }
 
-    /* Desktop: Side Panel */
     @media (min-width: 768px) {
       .slide-panel {
         top: 0;
@@ -746,12 +748,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       align-items: center;
       justify-content: space-between;
       position: relative;
-    }
-    /* No mobile o formulário ocupa só a parte de baixo, deixando o mapa visível para arrastar o pin */
-    @media (max-width: 767px) {
-      #form-panel {
-        max-height: 58dvh;
-      }
     }
     .panel-grabber {
       display: none;
@@ -809,7 +805,7 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       background: var(--bg-page);
       color: var(--text-main);
       padding: 10px 14px;
-      font-size: 16px; /* Evita auto-zoom iOS */
+      font-size: 16px;
       font-family: var(--font-sans);
     }
     .form-control:focus {
@@ -989,7 +985,7 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       padding-top: 14px;
     }
 
-    /* Modal de Imagem Expandida (Lightbox) */
+    /* Modal Lightbox */
     .lightbox-modal {
       position: fixed;
       inset: 0;
@@ -1019,7 +1015,7 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       cursor: pointer;
     }
 
-    /* Diálogo de Confirmação Genérico */
+    /* Diálogo de Confirmação */
     .confirm-dialog-backdrop {
       position: fixed;
       inset: 0;
@@ -1093,7 +1089,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       transform: translateY(0);
     }
 
-    /* Helper oculto */
     .sr-only {
       position: absolute;
       width: 1px;
@@ -1231,7 +1226,7 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
         <div class="form-group">
           <label for="form-address">Endereço / Referência</label>
           <input type="text" id="form-address" class="form-control" placeholder="Arraste o pin no mapa para preencher">
-          <span class="field-hint" id="form-coord-feedback">Posicione o pin vermelho no mapa.</span>
+          <span class="field-hint" id="form-coord-feedback">Posicione o pin no mapa.</span>
         </div>
 
         <!-- Estilo de Marcador -->
@@ -1381,7 +1376,7 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
     <div id="toast-container" class="toast-container" aria-live="polite"></div>
   </div>
 
-  <!-- Leaflet JS (Fixado sem integridade fictícia para evitar bloqueios de CDN) -->
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
   <!-- Aplicação Modular -->
@@ -1398,66 +1393,63 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       THUMB_MAX_DIMENSION: 320,
       IMAGE_JPEG_QUALITY: 0.82,
       NOMINATIM_DEBOUNCE_MS: 800,
-      DEFAULT_COORDS: [-14.235, -51.925], // Centro geográfico aproximado do Brasil
+      DEFAULT_COORDS: [-14.235, -51.925],
       DEFAULT_ZOOM: 5,
       FOCUSED_ZOOM: 16,
       MAP_MAX_ZOOM: 19,
 
-      // Geolocalização: primeiro um fix rápido (rede/Wi-Fi), depois refino por GPS em segundo plano
       GEO_FAST_TIMEOUT_MS: 8000,
       GEO_FAST_MAX_AGE_MS: 300000,
       GEO_REFINE_TIMEOUT_MS: 15000,
-      GEO_COARSE_ACCURACY_M: 1000, // acima disso o zoom é mais aberto
+      GEO_COARSE_ACCURACY_M: 1000,
       GEO_COARSE_ZOOM: 14,
-      GEO_MAX_CIRCLE_M: 3000,      // não desenha círculo de precisão absurdo
+      GEO_MAX_CIRCLE_M: 3000,
 
-      // Tipos de mapa: nenhum exige chave de API. Imagens de satélite/rótulos: Esri (exigem atribuição).
+      // Camadas 100% livres de autenticação e limpas de excesso de poluição
       MAP_STYLE_DEFAULT: 'standard',
       MAP_STYLES: {
-  standard: {
-    label: 'Limpo',
-    attribution: '© <a href="https://www.openstreetmap.org/copyright" rel="noopener noreferrer">OpenStreetMap</a> © <a href="https://carto.com/attributions" rel="noopener noreferrer">CARTO</a>',
-    layers: [{
-      // 'light_nolabels' deixa apenas o relevo/vias sutis sem poluição de texto
-      // Se quiser os nomes das cidades bem discretos, use 'light_all' sob basemaps oficial
-      url: 'https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png',
-      subdomains: 'abcd',
-      maxNativeZoom: 19
-    }]
-  },
-  minimal: {
-    label: 'Ultra Limpo',
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
-    layers: [{
-      // Sem nenhum rótulo ou poluição visual, perfeito para destacar fotos
-      url: 'https://{s}.basemaps.cartocdn.com/rastertiles/light_nolabels/{z}/{x}/{y}.png',
-      subdomains: 'abcd',
-      maxNativeZoom: 19
-    }]
-  },
-  satellite: {
-    label: 'Satélite',
-    attribution: 'Imagens © Esri, Maxar, Earthstar Geographics',
-    layers: [{
-      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      maxNativeZoom: 18
-    }]
-  },
-  hybrid: {
-    label: 'Híbrido',
-    attribution: 'Imagens e rótulos © Esri, Maxar, Earthstar Geographics',
-    layers: [
-      {
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        maxNativeZoom: 18
-      },
-      {
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-        maxNativeZoom: 18
+        standard: {
+          label: 'Limpo',
+          attribution: '© <a href="https://www.openstreetmap.org/copyright" rel="noopener noreferrer">OpenStreetMap</a> © <a href="https://carto.com/attributions" rel="noopener noreferrer">CARTO</a>',
+          layers: [{
+            url: 'https://{s}.basemaps.cartocdn.com/rastertiles/light_nolabels/{z}/{x}/{y}.png',
+            subdomains: 'abcd',
+            maxNativeZoom: 19
+          }]
+        },
+        detailed: {
+          label: 'Com Ruas',
+          attribution: '© <a href="https://www.openstreetmap.org/copyright" rel="noopener noreferrer">OpenStreetMap</a> © <a href="https://carto.com/attributions" rel="noopener noreferrer">CARTO</a>',
+          layers: [{
+            url: 'https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png',
+            subdomains: 'abcd',
+            maxNativeZoom: 19
+          }]
+        },
+        satellite: {
+          label: 'Satélite',
+          attribution: 'Imagens © Esri, Maxar, Earthstar Geographics',
+          layers: [{
+            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            maxNativeZoom: 18
+          }]
+        },
+        hybrid: {
+          label: 'Híbrido',
+          attribution: 'Imagens e rótulos © Esri, Maxar, Earthstar Geographics',
+          layers: [
+            {
+              url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+              maxNativeZoom: 18
+            },
+            {
+              url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+              maxNativeZoom: 18
+            }
+          ]
+        }
       }
-    ]
-  }
-}
+    };
 
     // -------------------------------------------------------------
     // 2. UTILIDADES GERAIS & DOM SEGURO
@@ -1492,7 +1484,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
 
       safeString(str, maxLength = 1000) {
         if (typeof str !== 'string') return '';
-        // Remove caracteres de controle invisíveis mantendo quebras de linha padrão
         return str.replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '').trim().slice(0, maxLength);
       },
 
@@ -1788,7 +1779,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
           this.cache.set(key, sanitized);
           return sanitized;
         } catch {
-          // Falha de rede ou CORS: degrada graciosamente permitindo digitação manual
           return '';
         }
       }
@@ -1841,7 +1831,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
         if (data.app !== 'mapa-de-momentos') return false;
         if (!Array.isArray(data.moments) || !Array.isArray(data.photos)) return false;
 
-        // Validação estrita de schema e proteção contra prototype pollution
         for (const m of data.moments) {
           if (!m || typeof m !== 'object') return false;
           if (Object.prototype.hasOwnProperty.call(m, '__proto__')) return false;
@@ -1902,12 +1891,12 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
     const AppState = {
       theme: 'light',
       mapStyle: CONFIG.MAP_STYLE_DEFAULT,
-      currentView: 'map', // 'map' | 'list'
+      currentView: 'map',
       moments: [],
       activeMoment: null,
       activePinCoords: null,
       isEditing: false,
-      draftPhotos: [], // Array de { id, blob, thumbBlob, previewUrl, isExisting, isCover }
+      draftPhotos: [],
       cachedPhotoUrls: new Map(),
 
       createThumbUrl(photoId, blob) {
@@ -1938,7 +1927,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
         toast.textContent = message;
         container.appendChild(toast);
 
-        // Força reflow para animação
         void toast.offsetWidth;
         toast.classList.add('show');
 
@@ -1987,7 +1975,7 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       accuracyCircle: null,
       selectionMarker: null,
       markersMap: new Map(),
-      userInteracted: false, // true depois que a pessoa arrasta/zooma: a partir daí o mapa não é recentrado sozinho
+      userInteracted: false,
       styleMenuEl: null,
       styleButtonEl: null,
 
@@ -2001,7 +1989,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
         this.updateTiles(AppState.theme);
         this.addStyleControl();
 
-        // Clique no mapa durante edição/criação posiciona o pin
         this.map.on('click', (e) => {
           const formPanel = document.getElementById('form-panel');
           if (formPanel.classList.contains('active')) {
@@ -2009,7 +1996,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
           }
         });
 
-        // Eventos de ponteiro/roda no container (e não 'movestart') porque setView/flyTo também disparam movestart
         const container = this.map.getContainer();
         const markInteracted = () => { this.userInteracted = true; };
         container.addEventListener('pointerdown', markInteracted, { passive: true });
@@ -2024,12 +2010,9 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
 
         const style = CONFIG.MAP_STYLES[AppState.mapStyle] || CONFIG.MAP_STYLES[CONFIG.MAP_STYLE_DEFAULT];
 
-        // O tema escuro é um filtro CSS nos tiles do mapa padrão (OSM só tem estilo claro).
-        // Satélite/relevo já têm aparência própria e não são invertidos.
-        const invert = theme === 'dark' && AppState.mapStyle === 'standard';
+        const invert = theme === 'dark' && (AppState.mapStyle === 'standard' || AppState.mapStyle === 'detailed');
         this.map.getContainer().classList.toggle('map-dark', invert);
 
-        // Só a primeira camada carrega a atribuição: no híbrido, rótulos e imagem são da mesma fonte
         style.layers.forEach((def, index) => {
           const layer = L.tileLayer(def.url, {
             maxZoom: CONFIG.MAP_MAX_ZOOM,
@@ -2051,7 +2034,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
         this.syncStyleMenu();
       },
 
-      // Botão "tipo de mapa" logo abaixo do zoom, com um menu de opções ao lado
       addStyleControl() {
         const SVG_NS = 'http://www.w3.org/2000/svg';
         const self = this;
@@ -2117,11 +2099,9 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
               else self.closeStyleMenu();
             });
 
-            // Impede que cliques/rolagem no controle movam o mapa ou posicionem o pin
             L.DomEvent.disableClickPropagation(wrap);
             L.DomEvent.disableScrollPropagation(wrap);
 
-            // Fecha ao tocar fora do controle
             document.addEventListener('pointerdown', (e) => {
               if (!menu.hidden && !wrap.contains(e.target)) self.closeStyleMenu();
             });
@@ -2159,7 +2139,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       },
 
       setUserLocation(lat, lng, accuracy) {
-        // Círculo de precisão: dá noção do quão confiável é o ponto (fix por rede costuma ter centenas de metros)
         if (Number.isFinite(accuracy) && accuracy > 0 && accuracy <= CONFIG.GEO_MAX_CIRCLE_M) {
           if (this.accuracyCircle) {
             this.accuracyCircle.setLatLng([lat, lng]).setRadius(accuracy);
@@ -2202,7 +2181,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
 
         const el = document.createElement('div');
         el.className = 'draggable-pin';
-        // Ícone SVG construído via DOM sem innerHTML
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.setAttribute('viewBox', '0 0 24 24');
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -2259,7 +2237,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       },
 
       async renderMomentMarkers(moments) {
-        // Limpa marcadores existentes
         for (const marker of this.markersMap.values()) {
           this.map.removeLayer(marker);
         }
@@ -2269,7 +2246,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
           const marker = await this.createMarkerForMoment(m);
           marker.addTo(this.map);
           marker.on('click', () => {
-            // Com o formulário aberto, abrir o detalhe descartaria o que foi digitado
             if (document.getElementById('form-panel').classList.contains('active')) return;
             ViewController.openDetail(m.id);
           });
@@ -2313,7 +2289,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
           return L.marker([m.lat, m.lng], { icon });
         }
 
-        // Estilo 'card' com thumbnail
         const cardEl = document.createElement('div');
         cardEl.className = 'moment-marker-card';
 
@@ -2353,8 +2328,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
         label.textContent = m.name;
         cardEl.appendChild(label);
 
-        // Largura do card é variável (depende do nome): o wrapper se centraliza sobre a coordenada via CSS,
-        // e iconSize null evita o 12x12 padrão do divIcon espremer o conteúdo.
         const anchorEl = document.createElement('div');
         anchorEl.className = 'card-anchor';
         anchorEl.appendChild(cardEl);
@@ -2389,7 +2362,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       async init() {
         this.bindEvents();
         this.loadMapStylePreference();
-        // O mapa precisa existir antes de tema/localização/marcadores, que dependem de MapController.map
         MapController.init();
         this.setupTheme();
         this.setupLocation();
@@ -2403,7 +2375,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
         }
       },
 
-      // Valor salvo é entrada não confiável: só aceita chaves que existem em MAP_STYLES
       loadMapStylePreference() {
         try {
           const saved = localStorage.getItem('momentos_map_style');
@@ -2435,7 +2406,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       },
 
       setupLocation() {
-        // Tenta recuperar última coordenada conhecida para agilizar
         try {
           const lastLoc = localStorage.getItem('momentos_last_loc');
           if (lastLoc) {
@@ -2449,9 +2419,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
         this.requestGeolocation(false);
       },
 
-      // Estratégia em duas etapas: um fix rápido (rede/Wi-Fi, aceita cache recente) centraliza o mapa logo;
-      // em seguida um fix de alta precisão (GPS) refina o ponto em segundo plano.
-      // Erros são sempre mostrados: antes, na abertura do app, eles eram silenciosos e parecia "não funcionar".
       requestGeolocation(userInitiated = false) {
         if (!navigator.geolocation) {
           UI.showToast('Este navegador não oferece geolocalização.');
@@ -2468,7 +2435,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
             this.applyUserPosition(pos, userInitiated);
             if (userInitiated) UI.showToast('Mapa centralizado na sua localização.');
 
-            // O refino é opcional: se falhar, o fix rápido já está no mapa
             navigator.geolocation.getCurrentPosition(
               (precise) => this.applyUserPosition(precise, false),
               (refineErr) => console.warn('Refino de localização indisponível:', refineErr.message),
@@ -2491,7 +2457,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
           localStorage.setItem('momentos_last_loc', JSON.stringify({ lat: latitude, lng: longitude }));
         } catch {}
 
-        // Não puxa o mapa de volta se a pessoa já navegou, ou se está posicionando o pin no formulário
         const formOpen = document.getElementById('form-panel').classList.contains('active');
         if (formOpen || (!forceCenter && MapController.userInteracted)) return;
 
@@ -2502,13 +2467,12 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
 
       describeGeolocationError(err) {
         if (err.code === err.PERMISSION_DENIED) {
-          // Em origens inseguras (ex.: http em IP de rede) o navegador nega sem nem perguntar
           if (!window.isSecureContext) {
             return 'Localização só funciona em https ou localhost. Abra o app por um desses endereços.';
           }
-          return 'Localização bloqueada. Libere no cadeado ao lado do endereço e toque em "Minha localização".';
+          return 'Localização bloqueada. Libere no navegador e toque em "Minha localização".';
         }
-        if (err.code === err.TIMEOUT) return 'Tempo esgotado ao buscar sua localização. Toque em "Minha localização" para tentar de novo.';
+        if (err.code === err.TIMEOUT) return 'Tempo esgotado ao buscar sua localização.';
         return 'Não foi possível determinar sua posição. Verifique GPS e conexão.';
       },
 
@@ -2518,7 +2482,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
         this.renderListView();
       },
 
-      // Painéis e Bottom Sheets
       closeAllPanels() {
         document.getElementById('form-panel').classList.remove('active');
         document.getElementById('detail-panel').classList.remove('active');
@@ -2542,7 +2505,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
         this.setSelectedStyle('card');
         this.renderPhotoUploadGrid();
 
-        // Pin inicial no centro da visualização atual do mapa
         const center = MapController.map.getCenter();
         MapController.setPinCoordinates(center.lat, center.lng, true);
 
@@ -2567,7 +2529,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
 
         this.setSelectedStyle(m.markerStyle || 'card');
 
-        // Carrega fotos existentes como rascunhos
         const existingPhotos = await DB.getPhotosForMoment(m.id);
         AppState.draftPhotos = existingPhotos.map((p) => ({
           id: p.id,
@@ -2585,8 +2546,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
         this.checkFormValidity();
       },
 
-      // O formulário abre SEM backdrop: o mapa precisa continuar clicável para posicionar o pin.
-      // Depois reenquadra o mapa para o pin ficar na área visível (acima do sheet no mobile, ao lado do painel no desktop).
       showFormPanel() {
         document.getElementById('form-panel').classList.add('active');
 
@@ -2629,7 +2588,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
           noteText.style.display = 'none';
         }
 
-        // Galeria de Fotos no Detalhe
         await this.setupDetailGallery(m);
 
         document.getElementById('panel-backdrop').classList.add('active');
@@ -2720,7 +2678,7 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
 
       renderPhotoUploadGrid() {
         const grid = document.getElementById('form-photo-grid');
-        grid.textContent = ''; // Limpa nós com segurança
+        grid.textContent = '';
 
         AppState.draftPhotos.forEach((photo, index) => {
           const item = document.createElement('div');
@@ -2734,7 +2692,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
           const actions = document.createElement('div');
           actions.className = 'photo-preview-actions';
 
-          // Botão Definir Capa
           const btnCover = document.createElement('button');
           btnCover.type = 'button';
           btnCover.className = 'photo-mini-btn';
@@ -2758,7 +2715,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
             this.renderPhotoUploadGrid();
           };
 
-          // Botão Remover
           const btnDel = document.createElement('button');
           btnDel.type = 'button';
           btnDel.className = 'photo-mini-btn';
@@ -2795,16 +2751,14 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
           grid.appendChild(item);
         });
 
-        // Garante que exista pelo menos uma capa caso haja fotos
         if (AppState.draftPhotos.length > 0 && !AppState.draftPhotos.some((p) => p.isCover)) {
           AppState.draftPhotos[0].isCover = true;
         }
       },
 
-      // Lista de Lugares
       renderListView() {
         const container = document.getElementById('list-items-container');
-        container.textContent = ''; // DOM seguro
+        container.textContent = '';
 
         const query = document.getElementById('list-search-input').value.toLowerCase().trim();
         const sortVal = document.getElementById('list-sort-select').value;
@@ -2858,7 +2812,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
           item.className = 'moment-card-item';
           item.tabIndex = 0;
 
-          // Placeholder inicial para imagem
           const thumbPlaceholder = document.createElement('div');
           thumbPlaceholder.className = 'moment-card-thumb-placeholder';
           const svgHeart = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -2946,20 +2899,16 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
       },
 
       bindEvents() {
-        // Alternância de Rota / Views
         window.addEventListener('hashchange', () => this.handleHashChange());
         document.getElementById('btn-toggle-view').onclick = () => { window.location.hash = '#/lista'; };
         document.getElementById('btn-close-list').onclick = () => { window.location.hash = ''; };
 
-        // Alternância de Tema
         document.getElementById('btn-toggle-theme').onclick = () => {
           this.setTheme(AppState.theme === 'dark' ? 'light' : 'dark');
         };
 
-        // Centralizar
         document.getElementById('btn-locate-me').onclick = () => this.requestGeolocation(true);
 
-        // Abertura de Painéis
         document.getElementById('btn-open-create').onclick = () => this.openCreateFlow();
         document.getElementById('btn-open-backup').onclick = () => {
           this.closeAllPanels();
@@ -2967,7 +2916,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
           document.getElementById('backup-panel').classList.add('active');
         };
 
-        // Fechamentos
         const closeHandler = async () => {
           const formPanel = document.getElementById('form-panel');
           if (formPanel.classList.contains('active')) {
@@ -2983,12 +2931,10 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
         document.getElementById('btn-close-backup').onclick = () => this.closeAllPanels();
         document.getElementById('panel-backdrop').onclick = closeHandler;
 
-        // Validação reativa do formulário
         ['form-name', 'form-date', 'form-address'].forEach((id) => {
           document.getElementById(id).addEventListener('input', () => this.checkFormValidity());
         });
 
-        // Seletores de estilo
         document.querySelectorAll('.style-option').forEach((el) => {
           el.onclick = () => this.setSelectedStyle(el.getAttribute('data-style'));
           el.onkeydown = (e) => {
@@ -2999,7 +2945,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
           };
         });
 
-        // Upload de Fotos
         const photoInput = document.getElementById('form-photo-input');
         document.getElementById('btn-trigger-file').onclick = () => photoInput.click();
 
@@ -3037,12 +2982,10 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
           photoInput.value = '';
         };
 
-        // Salvar Momento
         document.getElementById('btn-save-moment').onclick = async () => {
           await this.handleSaveMoment();
         };
 
-        // Ações de Detalhe
         document.getElementById('btn-edit-moment').onclick = () => {
           if (AppState.activeMoment) this.openEditFlow(AppState.activeMoment.id);
         };
@@ -3058,7 +3001,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
           await this.loadAndRenderMoments();
         };
 
-        // Lightbox
         document.getElementById('btn-close-lightbox').onclick = () => {
           document.getElementById('lightbox-modal').classList.remove('active');
         };
@@ -3068,11 +3010,9 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
           }
         };
 
-        // Filtros de Lista
         document.getElementById('list-search-input').oninput = () => this.renderListView();
         document.getElementById('list-sort-select').onchange = () => this.renderListView();
 
-        // Backup & Persistência
         document.getElementById('btn-export-json').onclick = async () => {
           try {
             await BackupService.exportBackup();
@@ -3117,14 +3057,13 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
           }
         };
 
-        // Tecla ESC global para fechar modais/painéis
         window.addEventListener('keydown', (e) => {
           if (e.key === 'Escape') {
             if (MapController.closeStyleMenu()) return;
             if (document.getElementById('lightbox-modal').classList.contains('active')) {
               document.getElementById('lightbox-modal').classList.remove('active');
             } else {
-              closeHandler(); // passa pela confirmação quando há formulário aberto
+              closeHandler();
             }
           }
         });
@@ -3164,7 +3103,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
             }
           }
 
-          // Identifica fotos excluídas durante a edição
           let photoIdsToDelete = [];
           if (AppState.isEditing) {
             const currentSavedPhotos = await DB.getPhotosForMoment(id);
@@ -3195,7 +3133,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
           this.closeAllPanels();
           await this.loadAndRenderMoments();
 
-          // Anima mapa até o local registrado
           MapController.map.flyTo([lat, lng], CONFIG.FOCUSED_ZOOM, { duration: 1.2 });
         } catch (err) {
           if (err.name === 'QuotaExceededError') {
@@ -3214,7 +3151,6 @@ img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgi
     // 9. MONITOR GLOBAL DE ERROS & INICIALIZAÇÃO
     // -------------------------------------------------------------
     window.addEventListener('unhandledrejection', (event) => {
-      // Degradação amigável sem quebrar o app; o erro real fica no console para diagnóstico
       console.error('Promise rejeitada sem tratamento:', event.reason);
       UI.showToast('Ocorreu uma operação inesperada.');
       event.preventDefault();
