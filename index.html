@@ -9,8 +9,7 @@
     script-src 'self' 'unsafe-inline' https://unpkg.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;
     font-src https://fonts.gstatic.com;
-    img-src 'self' blob: data: https://tile.openstreetmap.org https://server.arcgisonline.com https://*.tile.opentopomap.org https://*.basemaps.cartocdn.com;
-    connect-src 'self' blob: https://nominatim.openstreetmap.org;
+img-src 'self' blob: data: https://*.tile.openstreetmap.org https://server.arcgisonline.com https://*.tile.opentopomap.org https://*.basemaps.cartocdn.com;    connect-src 'self' blob: https://nominatim.openstreetmap.org;
   ">
   <title>Mapa de Momentos</title>
 
@@ -1415,40 +1414,50 @@
       // Tipos de mapa: nenhum exige chave de API. Imagens de satélite/rótulos: Esri (exigem atribuição).
       MAP_STYLE_DEFAULT: 'standard',
       MAP_STYLES: {
-        standard: {
-          label: 'Padrão',
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" rel="noopener noreferrer">OpenStreetMap</a>',
-          layers: [{ url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', subdomains: 'abcd' }]
-        },
-        satellite: {
-          label: 'Satélite',
-          attribution: 'Imagens &copy; Esri, Maxar, Earthstar Geographics',
-          layers: [{
-            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            maxNativeZoom: 18
-          }]
-        },
-        hybrid: {
-          label: 'Híbrido',
-          attribution: 'Imagens e rótulos &copy; Esri, Maxar, Earthstar Geographics',
-          layers: [
-            {
-              url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-              maxNativeZoom: 18
-            },
-            {
-              url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-              maxNativeZoom: 18
-            }
-          ]
-        },
-        terrain: {
-          label: 'Relevo',
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" rel="noopener noreferrer">OpenStreetMap</a>, SRTM | &copy; <a href="https://opentopomap.org" rel="noopener noreferrer">OpenTopoMap</a> (CC-BY-SA)',
-          layers: [{ url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', subdomains: 'abc', maxNativeZoom: 17 }]
-        }
+  standard: {
+    label: 'Limpo',
+    attribution: '© <a href="https://www.openstreetmap.org/copyright" rel="noopener noreferrer">OpenStreetMap</a> © <a href="https://carto.com/attributions" rel="noopener noreferrer">CARTO</a>',
+    layers: [{
+      // 'light_nolabels' deixa apenas o relevo/vias sutis sem poluição de texto
+      // Se quiser os nomes das cidades bem discretos, use 'light_all' sob basemaps oficial
+      url: 'https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png',
+      subdomains: 'abcd',
+      maxNativeZoom: 19
+    }]
+  },
+  minimal: {
+    label: 'Ultra Limpo',
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
+    layers: [{
+      // Sem nenhum rótulo ou poluição visual, perfeito para destacar fotos
+      url: 'https://{s}.basemaps.cartocdn.com/rastertiles/light_nolabels/{z}/{x}/{y}.png',
+      subdomains: 'abcd',
+      maxNativeZoom: 19
+    }]
+  },
+  satellite: {
+    label: 'Satélite',
+    attribution: 'Imagens © Esri, Maxar, Earthstar Geographics',
+    layers: [{
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      maxNativeZoom: 18
+    }]
+  },
+  hybrid: {
+    label: 'Híbrido',
+    attribution: 'Imagens e rótulos © Esri, Maxar, Earthstar Geographics',
+    layers: [
+      {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        maxNativeZoom: 18
+      },
+      {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+        maxNativeZoom: 18
       }
-    };
+    ]
+  }
+}
 
     // -------------------------------------------------------------
     // 2. UTILIDADES GERAIS & DOM SEGURO
