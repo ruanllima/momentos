@@ -1410,19 +1410,18 @@
       MAP_STYLES: {
         standard: {
           label: 'Limpo',
-          attribution: '© <a href="https://www.openstreetmap.org/copyright" rel="noopener noreferrer">OpenStreetMap</a> © <a href="https://carto.com/attributions" rel="noopener noreferrer">CARTO</a>',
+          attribution: 'Tiles © Esri — Esri, HERE, Garmin, © OpenStreetMap contributors, and the GIS user community',
           layers: [{
-            url: 'https://{s}.basemaps.cartocdn.com/rastertiles/light_nolabels/{z}/{x}/{y}.png',
-            subdomains: 'abcd',
-            maxNativeZoom: 19
+            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+            maxNativeZoom: 16
           }]
         },
         detailed: {
           label: 'Com Ruas',
-          attribution: '© <a href="https://www.openstreetmap.org/copyright" rel="noopener noreferrer">OpenStreetMap</a> © <a href="https://carto.com/attributions" rel="noopener noreferrer">CARTO</a>',
+          attribution: '© <a href="https://www.openstreetmap.org/copyright" rel="noopener noreferrer">OpenStreetMap</a> contributors',
           layers: [{
-            url: 'https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png',
-            subdomains: 'abcd',
+            url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            subdomains: 'abc',
             maxNativeZoom: 19
           }]
         },
