@@ -1,0 +1,2875 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Mapa de Momentos - Diário afetivo e geográfico">
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'none';
+    script-src 'self' 'unsafe-inline' https://unpkg.com;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;
+    font-src https://fonts.gstatic.com;
+    img-src 'self' blob: data: https://tile.openstreetmap.org;
+    connect-src 'self' blob: https://nominatim.openstreetmap.org;
+  ">
+  <title>Mapa de Momentos</title>
+
+  <!-- Google Fonts: Newsreader (Serif) + Inter (Sans) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+
+  <style>
+    /* DESIGN SYSTEM: Variáveis & Tipografia */
+    :root {
+      --bg-page: #fbf9f5;
+      --bg-surface: #ffffff;
+      --bg-surface-elevated: #f4f0ea;
+      --bg-subtle: #eee9e0;
+      
+      --text-main: #231f20;
+      --text-muted: #6e6763;
+      --text-subtle: #99908a;
+
+      --border-subtle: rgba(35, 31, 32, 0.08);
+      --border-focus: rgba(35, 31, 32, 0.25);
+
+      /* Destaque: Terracota Rosado & Vinho Contido */
+      --accent: #9a4843;
+      --accent-hover: #803935;
+      --accent-light: #fbf2f1;
+      --accent-ring: rgba(154, 72, 67, 0.25);
+
+      --danger: #b33939;
+      --danger-light: #fdf0f0;
+
+      --font-serif: 'Newsreader', Georgia, serif;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
+      --shadow-sheet: 0 -4px 28px rgba(0, 0, 0, 0.08);
+
+      --transition-fast: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+      --z-map: 1;
+      --z-nav: 400;
+      --z-fab: 500;
+      --z-list: 550; /* acima do dock e do header, abaixo dos painéis */
+      --z-panel: 600;
+      --z-toast: 1000;
+      --z-modal: 1100;
+    }
+
+    [data-theme="dark"] {
+      --bg-page: #151314;
+      --bg-surface: #1e1b1c;
+      --bg-surface-elevated: #282425;
+      --bg-subtle: #332f30;
+      
+      --text-main: #f5f2ef;
+      --text-muted: #a69f9a;
+      --text-subtle: #6f6864;
+
+      --border-subtle: rgba(245, 242, 239, 0.1);
+      --border-focus: rgba(245, 242, 239, 0.3);
+
+      --accent: #c46963;
+      --accent-hover: #d27974;
+      --accent-light: #2b1c1c;
+      --accent-ring: rgba(196, 105, 99, 0.35);
+
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+      --shadow-sheet: 0 -4px 28px rgba(0, 0, 0, 0.5);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: var(--bg-page);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Layout Base */
+    #app-root {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100dvh;
+      position: relative;
+    }
+
+    /* Mapa */
+    #map-view {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100dvh;
+      z-index: var(--z-map);
+      background-color: var(--bg-subtle);
+    }
+
+    /* Tema escuro do mapa: inverte só os tiles; marcadores e controles ficam fora do tile pane */
+    #map-view.map-dark .leaflet-tile-pane {
+      filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.7);
+    }
+
+    /* Estilização Customizada Leaflet */
+    .leaflet-control-zoom {
+      border: 1px solid var(--border-subtle) !important;
+      border-radius: var(--radius-md) !important;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm) !important;
+      margin-top: calc(env(safe-area-inset-top, 16px) + 64px) !important;
+      margin-left: max(16px, env(safe-area-inset-left, 16px)) !important;
+    }
+    .leaflet-control-zoom a {
+      background-color: var(--bg-surface) !important;
+      color: var(--text-main) !important;
+      border-bottom: 1px solid var(--border-subtle) !important;
+      width: 36px !important;
+      height: 36px !important;
+      line-height: 36px !important;
+      font-size: 16px !important;
+    }
+    .leaflet-control-attribution {
+      background: rgba(255, 255, 255, 0.6) !important;
+      backdrop-filter: blur(4px);
+      color: var(--text-subtle) !important;
+      font-size: 10px !important;
+      padding: 2px 8px !important;
+      border-top-left-radius: var(--radius-sm);
+    }
+    [data-theme="dark"] .leaflet-control-attribution {
+      background: rgba(20, 20, 20, 0.6) !important;
+    }
+
+    /* Marcador Localização do Usuário */
+    .user-loc-pulse {
+      width: 16px;
+      height: 16px;
+      background: #2b70c9;
+      border: 3px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 0 0 6px rgba(43, 112, 201, 0.25);
+    }
+
+    /* Marcadores Customizados */
+    .moment-marker-dot {
+      width: 14px;
+      height: 14px;
+      background: var(--accent);
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+      cursor: pointer;
+      transition: transform var(--transition-fast);
+    }
+    .moment-marker-dot:hover {
+      transform: scale(1.3);
+    }
+
+    .moment-marker-heart {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      filter: drop-shadow(0 2px 5px rgba(0,0,0,0.25));
+      transition: transform var(--transition-fast);
+    }
+    .moment-marker-heart svg {
+      width: 24px;
+      height: 24px;
+      fill: var(--accent);
+      stroke: #ffffff;
+      stroke-width: 1.5;
+    }
+    .moment-marker-heart:hover {
+      transform: scale(1.2) translateY(-2px);
+    }
+
+    .card-anchor {
+      position: absolute;
+      left: 0;
+      top: 0;
+      transform: translate(-50%, calc(-100% - 6px));
+    }
+    .moment-marker-card {
+      position: relative;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: var(--shadow-md);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform var(--transition-fast);
+    }
+    .moment-marker-card:hover {
+      transform: translateY(-3px) scale(1.02);
+    }
+    .moment-marker-card img {
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      object-fit: cover;
+      background: var(--bg-subtle);
+    }
+    .moment-marker-card .card-thumb-placeholder {
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      background: var(--accent-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+    }
+    .moment-marker-card .card-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-main);
+      padding-right: 6px;
+      max-width: 110px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .moment-marker-card::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 6px 6px 0;
+      border-style: solid;
+      border-color: var(--bg-surface) transparent transparent;
+    }
+
+    /* Pin Draggable do Form */
+    .draggable-pin {
+      position: relative;
+      cursor: grab;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    }
+    .draggable-pin:active {
+      cursor: grabbing;
+    }
+    .draggable-pin svg {
+      width: 38px;
+      height: 38px;
+      fill: var(--accent);
+      stroke: #ffffff;
+      stroke-width: 1.5;
+    }
+
+    /* Top Bar Flutuante */
+    .top-header {
+      position: absolute;
+      top: max(16px, env(safe-area-inset-top, 16px));
+      left: max(16px, env(safe-area-inset-left, 16px));
+      right: max(16px, env(safe-area-inset-right, 16px));
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: var(--z-nav);
+    }
+    .top-header > * {
+      pointer-events: auto;
+    }
+    .brand-pill {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-full);
+      padding: 8px 18px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-title {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      color: var(--text-main);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Botões Padrão */
+    .btn-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-full);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: background-color var(--transition-fast), transform var(--transition-fast);
+    }
+    .btn-icon:hover {
+      background: var(--bg-surface-elevated);
+    }
+    .btn-icon:active {
+      transform: scale(0.96);
+    }
+    .btn-icon:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 12px 20px;
+      font-size: 15px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      min-height: 44px;
+      transition: background-color var(--transition-fast), transform var(--transition-fast);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: var(--bg-subtle);
+      color: var(--text-main);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-secondary:hover {
+      background: var(--bg-surface-elevated);
+    }
+
+    /* Floating Action Buttons / Bottom Dock */
+    .bottom-dock {
+      position: absolute;
+      bottom: max(20px, env(safe-area-inset-bottom, 20px));
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: var(--z-fab);
+    }
+    .btn-register-fab {
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-full);
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: var(--shadow-md);
+      min-height: 48px;
+      transition: transform var(--transition-fast), background-color var(--transition-fast);
+    }
+    .btn-register-fab:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+    }
+    .btn-register-fab:active {
+      transform: translateY(0) scale(0.97);
+    }
+
+    /* Painel View: Lista */
+    #list-view {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100dvh;
+      background: var(--bg-page);
+      z-index: var(--z-list);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #list-view.active {
+      display: flex;
+    }
+    .list-header {
+      padding: max(20px, env(safe-area-inset-top, 20px)) 20px 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .list-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .list-header h1 {
+      font-family: var(--font-serif);
+      font-size: 26px;
+      font-weight: 500;
+    }
+    .list-filters {
+      display: flex;
+      gap: 10px;
+    }
+    .search-input {
+      flex: 1;
+      height: 42px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-page);
+      color: var(--text-main);
+      padding: 0 14px;
+      font-size: 15px;
+      font-family: var(--font-sans);
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .sort-select {
+      height: 42px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-page);
+      color: var(--text-main);
+      padding: 0 12px;
+      font-size: 14px;
+      font-family: var(--font-sans);
+      cursor: pointer;
+    }
+
+    .list-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px max(40px, env(safe-area-inset-bottom, 40px)) 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 760px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .moment-card-item {
+      display: flex;
+      gap: 14px;
+      padding: 14px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    .moment-card-item:hover {
+      border-color: var(--border-focus);
+      box-shadow: var(--shadow-sm);
+    }
+    .moment-card-item img, .moment-card-thumb-placeholder {
+      width: 76px;
+      height: 76px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--bg-subtle);
+    }
+    .moment-card-thumb-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-subtle);
+    }
+    .moment-card-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+    }
+    .moment-card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .moment-card-date {
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .moment-card-address {
+      font-size: 13px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Empty States */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .empty-state-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--accent-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .empty-state h3 {
+      font-family: var(--font-serif);
+      font-size: 22px;
+      font-weight: 500;
+    }
+    .empty-state p {
+      color: var(--text-muted);
+      max-width: 320px;
+      font-size: 14px;
+    }
+
+    /* Painéis Deslizantes / Bottom Sheets / Modais */
+    .backdrop-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(2px);
+      z-index: var(--z-panel);
+      display: none;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+    .backdrop-overlay.active {
+      display: block;
+      opacity: 1;
+    }
+
+    .slide-panel {
+      position: fixed;
+      background: var(--bg-surface);
+      z-index: calc(var(--z-panel) + 1);
+      box-shadow: var(--shadow-sheet);
+      display: flex;
+      flex-direction: column;
+      transition: transform var(--transition-fast);
+    }
+
+    /* Mobile First: Bottom Sheet */
+    @media (max-width: 767px) {
+      .slide-panel {
+        left: 0;
+        right: 0;
+        bottom: 0;
+        max-height: 90dvh;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        transform: translateY(100%);
+      }
+      .slide-panel.active {
+        transform: translateY(0);
+      }
+    }
+
+    /* Desktop: Side Panel */
+    @media (min-width: 768px) {
+      .slide-panel {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 440px;
+        max-height: 100dvh;
+        border-left: 1px solid var(--border-subtle);
+        transform: translateX(100%);
+      }
+      .slide-panel.active {
+        transform: translateX(0);
+      }
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+    /* No mobile o formulário ocupa só a parte de baixo, deixando o mapa visível para arrastar o pin */
+    @media (max-width: 767px) {
+      #form-panel {
+        max-height: 58dvh;
+      }
+    }
+    .panel-grabber {
+      display: none;
+    }
+    @media (max-width: 767px) {
+      .panel-grabber {
+        display: block;
+        width: 36px;
+        height: 4px;
+        background: var(--border-focus);
+        border-radius: var(--radius-full);
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+    }
+    .panel-header h2 {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 500;
+    }
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .panel-footer {
+      padding: 16px 20px max(16px, env(safe-area-inset-bottom, 16px)) 20px;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Formulário */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    .form-control {
+      width: 100%;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-page);
+      color: var(--text-main);
+      padding: 10px 14px;
+      font-size: 16px; /* Evita auto-zoom iOS */
+      font-family: var(--font-sans);
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    textarea.form-control {
+      resize: vertical;
+      min-height: 80px;
+    }
+    .field-hint {
+      font-size: 12px;
+      color: var(--text-subtle);
+    }
+
+    /* Seletor de Estilo de Marcador */
+    .style-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .style-option {
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-page);
+      border-radius: var(--radius-md);
+      padding: 10px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: border-color var(--transition-fast), background-color var(--transition-fast);
+      user-select: none;
+    }
+    .style-option.selected {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+    .style-option-label {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* Seletor & Galeria de Uploads */
+    .photo-upload-zone {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .photo-grid-preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+      gap: 8px;
+    }
+    .photo-preview-item {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-subtle);
+    }
+    .photo-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .photo-preview-item.is-cover {
+      border: 2px solid var(--accent);
+    }
+    .photo-preview-actions {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+    .photo-preview-item:hover .photo-preview-actions,
+    .photo-preview-item:focus-within .photo-preview-actions {
+      opacity: 1;
+    }
+    .photo-mini-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-full);
+      background: rgba(255,255,255,0.9);
+      color: var(--text-main);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    /* Detalhe do Momento */
+    .detail-gallery {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: var(--bg-subtle);
+    }
+    .detail-gallery img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      cursor: zoom-in;
+    }
+    .gallery-nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-full);
+      background: rgba(255,255,255,0.85);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      color: #231f20;
+    }
+    .gallery-nav-btn.prev { left: 10px; }
+    .gallery-nav-btn.next { right: 10px; }
+    .gallery-counter {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(0,0,0,0.6);
+      color: #ffffff;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+    }
+
+    .detail-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .detail-title {
+      font-family: var(--font-serif);
+      font-size: 24px;
+      font-weight: 500;
+      line-height: 1.25;
+    }
+    .detail-date-badge {
+      font-size: 14px;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .detail-address {
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+    .detail-address svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .detail-note {
+      font-size: 15px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      color: var(--text-main);
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 14px;
+    }
+
+    /* Modal de Imagem Expandida (Lightbox) */
+    .lightbox-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.92);
+      z-index: var(--z-modal);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .lightbox-modal.active {
+      display: flex;
+    }
+    .lightbox-modal img {
+      max-width: 100%;
+      max-height: 90dvh;
+      object-fit: contain;
+      border-radius: var(--radius-sm);
+    }
+    .lightbox-close {
+      position: absolute;
+      top: max(20px, env(safe-area-inset-top, 20px));
+      right: max(20px, env(safe-area-inset-right, 20px));
+      color: #ffffff;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* Diálogo de Confirmação Genérico */
+    .confirm-dialog-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: var(--z-modal);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .confirm-dialog-backdrop.active {
+      display: flex;
+    }
+    .confirm-dialog-box {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .confirm-dialog-box h3 {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 500;
+    }
+    .confirm-dialog-box p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .confirm-dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    /* Toasts */
+    .toast-container {
+      position: fixed;
+      top: max(20px, env(safe-area-inset-top, 20px));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: var(--z-toast);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+      width: 90%;
+      max-width: 380px;
+    }
+    .toast-message {
+      background: var(--text-main);
+      color: var(--bg-page);
+      border-radius: var(--radius-full);
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      text-align: center;
+      box-shadow: var(--shadow-md);
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity var(--transition-fast), transform var(--transition-fast);
+      pointer-events: auto;
+    }
+    .toast-message.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Helper oculto */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app-root">
+    <!-- Header Flutuante -->
+    <header class="top-header" role="banner">
+      <div class="brand-pill">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);">
+          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+        </svg>
+        <span class="brand-title">Momentos</span>
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-toggle-theme" class="btn-icon" aria-label="Alternar tema claro/escuro" type="button">
+          <svg class="icon-theme-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+          </svg>
+        </button>
+
+        <button id="btn-toggle-view" class="btn-icon" aria-label="Alternar para visualização em Lista" type="button">
+          <svg class="icon-view-list" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+        </button>
+
+        <button id="btn-open-backup" class="btn-icon" aria-label="Backup e Configurações" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v8"/><path d="m16 6-4 4-4-4"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Visualização de Mapa Principal -->
+    <main id="map-view" aria-label="Mapa Interativo de Momentos"></main>
+
+    <!-- Dock Inferior: Centralizar e Registrar -->
+    <nav class="bottom-dock" aria-label="Ações Rápidas">
+      <button id="btn-locate-me" class="btn-icon" aria-label="Centralizar na minha localização" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+        </svg>
+      </button>
+
+      <button id="btn-open-create" class="btn-register-fab" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        <span>Registrar</span>
+      </button>
+    </nav>
+
+    <!-- Visualização em Lista -->
+    <section id="list-view" aria-label="Lista de Lugares Registrados">
+      <div class="list-header">
+        <div class="list-header-row">
+          <h1>Momentos Registrados</h1>
+          <button id="btn-close-list" class="btn-icon" aria-label="Voltar para o mapa" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="list-filters">
+          <input type="search" id="list-search-input" class="search-input" placeholder="Buscar por nome, endereço ou notas...">
+          <select id="list-sort-select" class="sort-select" aria-label="Ordenar momentos">
+            <option value="date-desc">Mais recentes</option>
+            <option value="date-asc">Mais antigos</option>
+            <option value="name-asc">Nome (A-Z)</option>
+          </select>
+        </div>
+      </div>
+      <div id="list-items-container" class="list-content"></div>
+    </section>
+
+    <!-- Backdrop Universal para Painéis -->
+    <div id="panel-backdrop" class="backdrop-overlay" aria-hidden="true"></div>
+
+    <!-- Painel Formulário: Criar / Editar -->
+    <aside id="form-panel" class="slide-panel" aria-modal="true" role="dialog" aria-labelledby="form-panel-title">
+      <div class="panel-header">
+        <div class="panel-grabber"></div>
+        <h2 id="form-panel-title">Novo Momento</h2>
+        <button id="btn-close-form" class="btn-icon" aria-label="Fechar painel" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <form id="moment-form" class="panel-body">
+        <input type="hidden" id="form-moment-id">
+        <input type="hidden" id="form-lat">
+        <input type="hidden" id="form-lng">
+
+        <!-- Fotos -->
+        <div class="form-group photo-upload-zone">
+          <label>Fotografias (até 12 fotos)</label>
+          <div id="form-photo-grid" class="photo-grid-preview"></div>
+          <button id="btn-trigger-file" type="button" class="btn-secondary" style="width: 100%;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"/><line x1="16" y1="5" x2="22" y2="5"/><line x1="19" y1="2" x2="19" y2="8"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+            </svg>
+            <span>Adicionar Fotos</span>
+          </button>
+          <input type="file" id="form-photo-input" class="sr-only" accept="image/*" multiple>
+          <span class="field-hint">A primeira foto é a capa. Toque em uma foto para defini-la como capa.</span>
+        </div>
+
+        <!-- Nome -->
+        <div class="form-group">
+          <label for="form-name">Nome do Lugar ou Momento *</label>
+          <input type="text" id="form-name" class="form-control" maxlength="80" required placeholder="Ex.: Café na Praia, Jantar Especial">
+        </div>
+
+        <!-- Data -->
+        <div class="form-group">
+          <label for="form-date">Data do Momento *</label>
+          <input type="date" id="form-date" class="form-control" required>
+        </div>
+
+        <!-- Localização e Endereço -->
+        <div class="form-group">
+          <label for="form-address">Endereço / Referência</label>
+          <input type="text" id="form-address" class="form-control" placeholder="Arraste o pin no mapa para preencher">
+          <span class="field-hint" id="form-coord-feedback">Posicione o pin vermelho no mapa.</span>
+        </div>
+
+        <!-- Estilo de Marcador -->
+        <div class="form-group">
+          <label>Estilo do Marcador</label>
+          <div class="style-selector" role="radiogroup" aria-label="Estilo do Marcador">
+            <div class="style-option selected" data-style="card" role="radio" aria-checked="true" tabindex="0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect width="18" height="14" x="3" y="3" rx="2"/><circle cx="8" cy="8" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+              <span class="style-option-label">Card</span>
+            </div>
+            <div class="style-option" data-style="heart" role="radio" aria-checked="false" tabindex="0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+              <span class="style-option-label">Coração</span>
+            </div>
+            <div class="style-option" data-style="dot" role="radio" aria-checked="false" tabindex="0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="6"/></svg>
+              <span class="style-option-label">Ponto</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nota -->
+        <div class="form-group">
+          <label for="form-note">Notas e Lembranças</label>
+          <textarea id="form-note" class="form-control" maxlength="1000" placeholder="Sensações, pratos favoritos, risadas..."></textarea>
+        </div>
+      </form>
+
+      <div class="panel-footer">
+        <button id="btn-cancel-form" type="button" class="btn-secondary">Cancelar</button>
+        <button id="btn-save-moment" type="button" class="btn-primary" disabled>Salvar</button>
+      </div>
+    </aside>
+
+    <!-- Painel Detalhe do Momento -->
+    <aside id="detail-panel" class="slide-panel" aria-modal="true" role="dialog" aria-labelledby="detail-title">
+      <div class="panel-header">
+        <div class="panel-grabber"></div>
+        <span class="detail-date-badge" id="detail-date-text"></span>
+        <button id="btn-close-detail" class="btn-icon" aria-label="Fechar detalhes" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="panel-body">
+        <div id="detail-gallery-container" class="detail-gallery" style="display: none;">
+          <img id="detail-gallery-img" src="" alt="Foto do momento">
+          <button id="btn-gallery-prev" class="gallery-nav-btn prev" aria-label="Foto anterior" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <button id="btn-gallery-next" class="gallery-nav-btn next" aria-label="Próxima foto" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <div id="detail-gallery-counter" class="gallery-counter"></div>
+        </div>
+
+        <div class="detail-meta">
+          <h2 class="detail-title" id="detail-title"></h2>
+          <div class="detail-address" id="detail-address-container">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span id="detail-address-text"></span>
+          </div>
+          <p class="detail-note" id="detail-note-text"></p>
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        <button id="btn-delete-moment" class="btn-secondary" style="color:var(--danger);" type="button">Excluir</button>
+        <button id="btn-edit-moment" class="btn-primary" type="button">Editar</button>
+      </div>
+    </aside>
+
+    <!-- Painel Backup & Dados -->
+    <aside id="backup-panel" class="slide-panel" aria-modal="true" role="dialog" aria-labelledby="backup-title">
+      <div class="panel-header">
+        <div class="panel-grabber"></div>
+        <h2 id="backup-title">Dados e Backup</h2>
+        <button id="btn-close-backup" class="btn-icon" aria-label="Fechar backup" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="panel-body">
+        <div class="form-group">
+          <label>Armazenamento Local Seguro</label>
+          <p style="font-size: 13px; color: var(--text-muted);">
+            Todos os seus registros e fotografias são salvos exclusivamente no seu navegador (IndexedDB).
+          </p>
+          <button id="btn-persist-storage" type="button" class="btn-secondary" style="margin-top: 8px;">
+            Ativar Persistência Durável
+          </button>
+          <span id="persist-status-label" class="field-hint"></span>
+        </div>
+
+        <hr style="border:0; border-top: 1px solid var(--border-subtle);">
+
+        <div class="form-group" style="gap: 12px;">
+          <label>Exportar Cópia de Segurança</label>
+          <p style="font-size: 13px; color: var(--text-muted);">
+            Baixe um arquivo JSON autocontido com todos os momentos e fotos para restaurar quando quiser.
+          </p>
+          <button id="btn-export-json" type="button" class="btn-primary">
+            Exportar Dados (.json)
+          </button>
+        </div>
+
+        <hr style="border:0; border-top: 1px solid var(--border-subtle);">
+
+        <div class="form-group" style="gap: 12px;">
+          <label>Restaurar Cópia de Segurança</label>
+          <p style="font-size: 13px; color: var(--text-muted);">
+            Importe seus momentos salvos de outro dispositivo ou backup anterior.
+          </p>
+          <button id="btn-trigger-import" type="button" class="btn-secondary">
+            Selecionar Arquivo de Backup
+          </button>
+          <input type="file" id="backup-file-input" class="sr-only" accept=".json,application/json">
+        </div>
+      </div>
+    </aside>
+
+    <!-- Modal Lightbox (Zoom de Fotos) -->
+    <div id="lightbox-modal" class="lightbox-modal" role="dialog" aria-label="Visualização em alta resolução">
+      <button id="btn-close-lightbox" class="lightbox-close" aria-label="Fechar foto ampliada">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <img id="lightbox-img" src="" alt="Foto expandida">
+    </div>
+
+    <!-- Modal de Confirmação Genérico -->
+    <div id="confirm-modal" class="confirm-dialog-backdrop" role="alertdialog" aria-modal="true">
+      <div class="confirm-dialog-box">
+        <h3 id="confirm-title">Confirmar ação</h3>
+        <p id="confirm-message">Você tem certeza que deseja prosseguir?</p>
+        <div class="confirm-dialog-actions">
+          <button id="btn-confirm-cancel" class="btn-secondary" type="button">Cancelar</button>
+          <button id="btn-confirm-ok" class="btn-primary" type="button">Continuar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recipiente de Mensagens Toast -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+  </div>
+
+  <!-- Leaflet JS (Fixado sem integridade fictícia para evitar bloqueios de CDN) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+  <!-- Aplicação Modular -->
+  <script type="module">
+    // -------------------------------------------------------------
+    // 1. CONFIGURAÇÕES & CONSTANTES
+    // -------------------------------------------------------------
+    const CONFIG = {
+      DB_NAME: 'momentos_db',
+      DB_VERSION: 1,
+      MAX_PHOTOS_PER_MOMENT: 12,
+      MAX_IMAGE_RAW_SIZE_MB: 15,
+      IMAGE_MAX_DIMENSION: 1600,
+      THUMB_MAX_DIMENSION: 320,
+      IMAGE_JPEG_QUALITY: 0.82,
+      NOMINATIM_DEBOUNCE_MS: 800,
+      DEFAULT_COORDS: [-14.235, -51.925], // Centro geográfico aproximado do Brasil
+      DEFAULT_ZOOM: 5,
+      FOCUSED_ZOOM: 16
+    };
+
+    // -------------------------------------------------------------
+    // 2. UTILIDADES GERAIS & DOM SEGURO
+    // -------------------------------------------------------------
+    const Utils = {
+      uuid() {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+          return crypto.randomUUID();
+        }
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+          const r = Math.random() * 16 | 0;
+          const v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+      },
+
+      formatDate(dateStr) {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        if (parts.length !== 3) return dateStr;
+        const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(date);
+      },
+
+      todayIso() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      },
+
+      safeString(str, maxLength = 1000) {
+        if (typeof str !== 'string') return '';
+        // Remove caracteres de controle invisíveis mantendo quebras de linha padrão
+        return str.replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '').trim().slice(0, maxLength);
+      },
+
+      debounce(fn, delay) {
+        let timer = null;
+        return function(...args) {
+          clearTimeout(timer);
+          timer = setTimeout(() => fn.apply(this, args), delay);
+        };
+      }
+    };
+
+    // -------------------------------------------------------------
+    // 3. CAMADA DE DADOS: INDEXEDDB
+    // -------------------------------------------------------------
+    const DB = {
+      dbPromise: null,
+
+      init() {
+        if (this.dbPromise) return this.dbPromise;
+
+        this.dbPromise = new Promise((resolve, reject) => {
+          const req = indexedDB.open(CONFIG.DB_NAME, CONFIG.DB_VERSION);
+
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('moments')) {
+              const momentStore = db.createObjectStore('moments', { keyPath: 'id' });
+              momentStore.createIndex('date', 'date', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('photos')) {
+              const photoStore = db.createObjectStore('photos', { keyPath: 'id' });
+              photoStore.createIndex('momentId', 'momentId', { unique: false });
+            }
+          };
+
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+
+        return this.dbPromise;
+      },
+
+      async getMoments() {
+        const db = await this.init();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('moments', 'readonly');
+          const store = tx.objectStore('moments');
+          const req = store.getAll();
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => reject(req.error);
+        });
+      },
+
+      async getMomentById(id) {
+        const db = await this.init();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('moments', 'readonly');
+          const store = tx.objectStore('moments');
+          const req = store.get(id);
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => reject(req.error);
+        });
+      },
+
+      async saveMomentWithPhotos(moment, newPhotoRecords = [], photoIdsToDelete = []) {
+        const db = await this.init();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(['moments', 'photos'], 'readwrite');
+          const mStore = tx.objectStore('moments');
+          const pStore = tx.objectStore('photos');
+
+          tx.onerror = () => reject(tx.error);
+          tx.oncomplete = () => resolve();
+
+          mStore.put(moment);
+
+          for (const photo of newPhotoRecords) {
+            pStore.put(photo);
+          }
+
+          for (const pid of photoIdsToDelete) {
+            pStore.delete(pid);
+          }
+        });
+      },
+
+      async deleteMoment(momentId) {
+        const db = await this.init();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(['moments', 'photos'], 'readwrite');
+          const mStore = tx.objectStore('moments');
+          const pStore = tx.objectStore('photos');
+          const pIndex = pStore.index('momentId');
+
+          tx.onerror = () => reject(tx.error);
+          tx.oncomplete = () => resolve();
+
+          mStore.delete(momentId);
+
+          const reqPhotos = pIndex.getAllKeys(momentId);
+          reqPhotos.onsuccess = () => {
+            const photoKeys = reqPhotos.result || [];
+            for (const key of photoKeys) {
+              pStore.delete(key);
+            }
+          };
+        });
+      },
+
+      async getPhotosForMoment(momentId) {
+        const db = await this.init();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('photos', 'readonly');
+          const pStore = tx.objectStore('photos');
+          const pIndex = pStore.index('momentId');
+          const req = pIndex.getAll(momentId);
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => reject(req.error);
+        });
+      },
+
+      async getPhotoById(photoId) {
+        const db = await this.init();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('photos', 'readonly');
+          const pStore = tx.objectStore('photos');
+          const req = pStore.get(photoId);
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => reject(req.error);
+        });
+      },
+
+      async getAllDataDump() {
+        const db = await this.init();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(['moments', 'photos'], 'readonly');
+          const mStore = tx.objectStore('moments');
+          const pStore = tx.objectStore('photos');
+
+          let moments = [];
+          let photos = [];
+
+          mStore.getAll().onsuccess = (e) => { moments = e.target.result || []; };
+          pStore.getAll().onsuccess = (e) => { photos = e.target.result || []; };
+
+          tx.oncomplete = () => resolve({ moments, photos });
+          tx.onerror = () => reject(tx.error);
+        });
+      }
+    };
+
+    // -------------------------------------------------------------
+    // 4. SERVIÇOS: IMAGEM, GEOCODIFICAÇÃO E BACKUP
+    // -------------------------------------------------------------
+    const ImageService = {
+      async compressFile(file) {
+        if (!file.type.startsWith('image/')) {
+          throw new Error('Formato de arquivo não suportado.');
+        }
+
+        if (file.size > CONFIG.MAX_IMAGE_RAW_SIZE_MB * 1024 * 1024) {
+          throw new Error(`Imagem excede o limite de ${CONFIG.MAX_IMAGE_RAW_SIZE_MB}MB.`);
+        }
+
+        let bitmap;
+        try {
+          if ('createImageBitmap' in window) {
+            bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+          } else {
+            bitmap = await this.bitmapFromImgElement(file);
+          }
+        } catch {
+          throw new Error('Não foi possível decodificar esta imagem.');
+        }
+
+        const fullBlob = await this.resizeBitmap(bitmap, CONFIG.IMAGE_MAX_DIMENSION, CONFIG.IMAGE_JPEG_QUALITY);
+        const thumbBlob = await this.resizeBitmap(bitmap, CONFIG.THUMB_MAX_DIMENSION, 0.75);
+
+        const width = bitmap.width;
+        const height = bitmap.height;
+        bitmap.close?.();
+
+        return { fullBlob, thumbBlob, width, height };
+      },
+
+      resizeBitmap(bitmap, maxDimension, quality) {
+        return new Promise((resolve, reject) => {
+          let { width, height } = bitmap;
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas indisponível.'));
+            return;
+          }
+
+          ctx.drawImage(bitmap, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error('Falha ao gerar compressão.'));
+          }, 'image/jpeg', quality);
+        });
+      },
+
+      bitmapFromImgElement(file) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          const url = URL.createObjectURL(file);
+          img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(img);
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('Erro ao carregar elemento de imagem.'));
+          };
+          img.src = url;
+        });
+      },
+
+      blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      },
+
+      base64ToBlob(base64Data) {
+        const parts = base64Data.split(';base64,');
+        const contentType = parts[0].split(':')[1] || 'image/jpeg';
+        const raw = window.atob(parts[1]);
+        const uInt8Array = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; ++i) {
+          uInt8Array[i] = raw.charCodeAt(i);
+        }
+        return new Blob([uInt8Array], { type: contentType });
+      }
+    };
+
+    const GeoService = {
+      lastRequestTime: 0,
+      cache: new Map(),
+
+      async reverseGeocode(lat, lng) {
+        const key = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+        if (this.cache.has(key)) return this.cache.get(key);
+
+        const now = Date.now();
+        const elapsed = now - this.lastRequestTime;
+        if (elapsed < 1000) {
+          await new Promise((r) => setTimeout(r, 1000 - elapsed));
+        }
+
+        this.lastRequestTime = Date.now();
+
+        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&accept-language=pt-BR`;
+
+        try {
+          const response = await fetch(url, {
+            headers: { 'Accept': 'application/json' }
+          });
+
+          if (!response.ok) return '';
+
+          const data = await response.json();
+          let addr = '';
+          if (data && data.address) {
+            const a = data.address;
+            const road = a.road || a.pedestrian || a.suburb || '';
+            const city = a.city || a.town || a.village || a.municipality || '';
+            const state = a.state || '';
+            addr = [road, city, state].filter(Boolean).join(', ');
+          }
+          if (!addr && data && data.display_name) {
+            addr = data.display_name.split(',').slice(0, 3).join(',');
+          }
+
+          const sanitized = Utils.safeString(addr, 200);
+          this.cache.set(key, sanitized);
+          return sanitized;
+        } catch {
+          // Falha de rede ou CORS: degrada graciosamente permitindo digitação manual
+          return '';
+        }
+      }
+    };
+
+    const BackupService = {
+      async exportBackup() {
+        const { moments, photos } = await DB.getAllDataDump();
+
+        const photosBase64 = [];
+        for (const p of photos) {
+          const fullB64 = await ImageService.blobToBase64(p.fullBlob);
+          const thumbB64 = await ImageService.blobToBase64(p.thumbBlob);
+          photosBase64.push({
+            id: p.id,
+            momentId: p.momentId,
+            fullB64,
+            thumbB64,
+            width: p.width,
+            height: p.height,
+            createdAt: p.createdAt
+          });
+        }
+
+        const payload = {
+          version: 1,
+          app: 'mapa-de-momentos',
+          exportedAt: new Date().toISOString(),
+          moments,
+          photos: photosBase64
+        };
+
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `momentos-backup-${Utils.todayIso()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+        try {
+          localStorage.setItem('momentos_last_backup', Date.now().toString());
+        } catch {}
+      },
+
+      validateBackupSchema(data) {
+        if (!data || typeof data !== 'object') return false;
+        if (data.app !== 'mapa-de-momentos') return false;
+        if (!Array.isArray(data.moments) || !Array.isArray(data.photos)) return false;
+
+        // Validação estrita de schema e proteção contra prototype pollution
+        for (const m of data.moments) {
+          if (!m || typeof m !== 'object') return false;
+          if (Object.prototype.hasOwnProperty.call(m, '__proto__')) return false;
+          if (typeof m.id !== 'string' || typeof m.name !== 'string') return false;
+          if (typeof m.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(m.date)) return false;
+          if (typeof m.lat !== 'number' || m.lat < -90 || m.lat > 90) return false;
+          if (typeof m.lng !== 'number' || m.lng < -180 || m.lng > 180) return false;
+          if (!['card', 'heart', 'dot'].includes(m.markerStyle)) m.markerStyle = 'card';
+        }
+
+        for (const p of data.photos) {
+          if (!p || typeof p !== 'object') return false;
+          if (Object.prototype.hasOwnProperty.call(p, '__proto__')) return false;
+          if (typeof p.id !== 'string' || typeof p.fullB64 !== 'string' || typeof p.thumbB64 !== 'string') return false;
+        }
+
+        return true;
+      },
+
+      async importBackup(data) {
+        if (!this.validateBackupSchema(data)) {
+          throw new Error('Arquivo de backup inválido ou incompatível.');
+        }
+
+        const db = await DB.init();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(['moments', 'photos'], 'readwrite');
+          const mStore = tx.objectStore('moments');
+          const pStore = tx.objectStore('photos');
+
+          tx.onerror = () => reject(tx.error);
+          tx.oncomplete = () => resolve();
+
+          for (const m of data.moments) {
+            mStore.put(m);
+          }
+
+          for (const p of data.photos) {
+            const fullBlob = ImageService.base64ToBlob(p.fullB64);
+            const thumbBlob = ImageService.base64ToBlob(p.thumbB64);
+            pStore.put({
+              id: p.id,
+              momentId: p.momentId,
+              fullBlob,
+              thumbBlob,
+              width: p.width,
+              height: p.height,
+              createdAt: p.createdAt || Date.now()
+            });
+          }
+        });
+      }
+    };
+
+    // -------------------------------------------------------------
+    // 5. GERENCIADOR DE ESTADO DA APLICAÇÃO
+    // -------------------------------------------------------------
+    const AppState = {
+      theme: 'light',
+      currentView: 'map', // 'map' | 'list'
+      moments: [],
+      activeMoment: null,
+      activePinCoords: null,
+      isEditing: false,
+      draftPhotos: [], // Array de { id, blob, thumbBlob, previewUrl, isExisting, isCover }
+      cachedPhotoUrls: new Map(),
+
+      createThumbUrl(photoId, blob) {
+        if (this.cachedPhotoUrls.has(photoId)) {
+          return this.cachedPhotoUrls.get(photoId);
+        }
+        const url = URL.createObjectURL(blob);
+        this.cachedPhotoUrls.set(photoId, url);
+        return url;
+      },
+
+      revokeAllUrls() {
+        for (const url of this.cachedPhotoUrls.values()) {
+          URL.revokeObjectURL(url);
+        }
+        this.cachedPhotoUrls.clear();
+      }
+    };
+
+    // -------------------------------------------------------------
+    // 6. UI: TOASTS & MODAIS DE CONFIRMAÇÃO
+    // -------------------------------------------------------------
+    const UI = {
+      showToast(message) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast-message';
+        toast.textContent = message;
+        container.appendChild(toast);
+
+        // Força reflow para animação
+        void toast.offsetWidth;
+        toast.classList.add('show');
+
+        setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => container.removeChild(toast), 300);
+        }, 3200);
+      },
+
+      confirm(title, message, okText = 'Continuar') {
+        return new Promise((resolve) => {
+          const modal = document.getElementById('confirm-modal');
+          const titleEl = document.getElementById('confirm-title');
+          const msgEl = document.getElementById('confirm-message');
+          const okBtn = document.getElementById('btn-confirm-ok');
+          const cancelBtn = document.getElementById('btn-confirm-cancel');
+
+          titleEl.textContent = title;
+          msgEl.textContent = message;
+          okBtn.textContent = okText;
+
+          modal.classList.add('active');
+
+          const cleanup = () => {
+            modal.classList.remove('active');
+            okBtn.removeEventListener('click', onOk);
+            cancelBtn.removeEventListener('click', onCancel);
+          };
+
+          const onOk = () => { cleanup(); resolve(true); };
+          const onCancel = () => { cleanup(); resolve(false); };
+
+          okBtn.addEventListener('click', onOk);
+          cancelBtn.addEventListener('click', onCancel);
+        });
+      }
+    };
+
+    // -------------------------------------------------------------
+    // 7. COMPONENTE MAPA (LEAFLET WRAPPER)
+    // -------------------------------------------------------------
+    const MapController = {
+      map: null,
+      tileLayer: null,
+      userLocationMarker: null,
+      selectionMarker: null,
+      markersMap: new Map(),
+
+      init() {
+        this.map = L.map('map-view', {
+          zoomControl: true,
+          attributionControl: true
+        }).setView(CONFIG.DEFAULT_COORDS, CONFIG.DEFAULT_ZOOM);
+
+        this.updateTiles(AppState.theme);
+
+        // Clique no mapa durante edição/criação posiciona o pin
+        this.map.on('click', (e) => {
+          const formPanel = document.getElementById('form-panel');
+          if (formPanel.classList.contains('active')) {
+            this.setPinCoordinates(e.latlng.lat, e.latlng.lng, true);
+          }
+        });
+      },
+
+      updateTiles(theme) {
+        if (this.tileLayer) {
+          this.map.removeLayer(this.tileLayer);
+        }
+
+        // OSM não exige chave. A CARTO passou a exigir API key nos tiles raster gratuitos.
+        // O tema escuro é feito por filtro CSS no tile pane (classe no container do mapa), pois OSM só tem estilo claro.
+        this.map.getContainer().classList.toggle('map-dark', theme === 'dark');
+
+        this.tileLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" rel="noopener noreferrer">OpenStreetMap</a>'
+        }).addTo(this.map);
+      },
+
+      setUserLocation(lat, lng) {
+        if (this.userLocationMarker) {
+          this.userLocationMarker.setLatLng([lat, lng]);
+        } else {
+          const iconEl = document.createElement('div');
+          iconEl.className = 'user-loc-pulse';
+          const icon = L.divIcon({
+            html: iconEl,
+            className: '',
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+          });
+          this.userLocationMarker = L.marker([lat, lng], { icon, zIndexOffset: 100 }).addTo(this.map);
+        }
+      },
+
+      showSelectionPin(lat, lng) {
+        if (this.selectionMarker) {
+          this.selectionMarker.setLatLng([lat, lng]);
+          return;
+        }
+
+        const el = document.createElement('div');
+        el.className = 'draggable-pin';
+        // Ícone SVG construído via DOM sem innerHTML
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z');
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', '12');
+        circle.setAttribute('cy', '10');
+        circle.setAttribute('r', '3');
+        svg.appendChild(path);
+        svg.appendChild(circle);
+        el.appendChild(svg);
+
+        const icon = L.divIcon({
+          html: el,
+          className: '',
+          iconSize: [38, 38],
+          iconAnchor: [19, 38]
+        });
+
+        this.selectionMarker = L.marker([lat, lng], {
+          icon,
+          draggable: true,
+          zIndexOffset: 1000
+        }).addTo(this.map);
+
+        this.selectionMarker.on('dragend', (e) => {
+          const p = e.target.getLatLng();
+          this.setPinCoordinates(p.lat, p.lng, true);
+        });
+      },
+
+      removeSelectionPin() {
+        if (this.selectionMarker) {
+          this.map.removeLayer(this.selectionMarker);
+          this.selectionMarker = null;
+        }
+      },
+
+      setPinCoordinates(lat, lng, triggerGeocode = false) {
+        AppState.activePinCoords = { lat, lng };
+        this.showSelectionPin(lat, lng);
+
+        const coordFeedback = document.getElementById('form-coord-feedback');
+        coordFeedback.textContent = `Coordenadas: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
+        document.getElementById('form-lat').value = String(lat);
+        document.getElementById('form-lng').value = String(lng);
+        ViewController.checkFormValidity();
+
+        if (triggerGeocode) {
+          coordFeedback.textContent = 'Buscando endereço...';
+          debouncedGeocode(lat, lng);
+        }
+      },
+
+      async renderMomentMarkers(moments) {
+        // Limpa marcadores existentes
+        for (const marker of this.markersMap.values()) {
+          this.map.removeLayer(marker);
+        }
+        this.markersMap.clear();
+
+        for (const m of moments) {
+          const marker = await this.createMarkerForMoment(m);
+          marker.addTo(this.map);
+          marker.on('click', () => {
+            // Com o formulário aberto, abrir o detalhe descartaria o que foi digitado
+            if (document.getElementById('form-panel').classList.contains('active')) return;
+            ViewController.openDetail(m.id);
+          });
+          this.markersMap.set(m.id, marker);
+        }
+      },
+
+      async createMarkerForMoment(m) {
+        const style = m.markerStyle || 'card';
+
+        if (style === 'dot') {
+          const el = document.createElement('div');
+          el.className = 'moment-marker-dot';
+          el.title = m.name;
+          const icon = L.divIcon({
+            html: el,
+            className: '',
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
+          });
+          return L.marker([m.lat, m.lng], { icon });
+        }
+
+        if (style === 'heart') {
+          const el = document.createElement('div');
+          el.className = 'moment-marker-heart';
+          el.title = m.name;
+          const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.setAttribute('viewBox', '0 0 24 24');
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', 'M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z');
+          svg.appendChild(path);
+          el.appendChild(svg);
+
+          const icon = L.divIcon({
+            html: el,
+            className: '',
+            iconSize: [28, 28],
+            iconAnchor: [14, 26]
+          });
+          return L.marker([m.lat, m.lng], { icon });
+        }
+
+        // Estilo 'card' com thumbnail
+        const cardEl = document.createElement('div');
+        cardEl.className = 'moment-marker-card';
+
+        let hasCover = false;
+        if (m.coverPhotoId) {
+          try {
+            const photoRecord = await DB.getPhotoById(m.coverPhotoId);
+            if (photoRecord && photoRecord.thumbBlob) {
+              const img = document.createElement('img');
+              img.src = AppState.createThumbUrl(photoRecord.id, photoRecord.thumbBlob);
+              img.alt = m.name;
+              cardEl.appendChild(img);
+              hasCover = true;
+            }
+          } catch {}
+        }
+
+        if (!hasCover) {
+          const placeholder = document.createElement('div');
+          placeholder.className = 'card-thumb-placeholder';
+          const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.setAttribute('width', '16');
+          svg.setAttribute('height', '16');
+          svg.setAttribute('viewBox', '0 0 24 24');
+          svg.setAttribute('fill', 'none');
+          svg.setAttribute('stroke', 'currentColor');
+          svg.setAttribute('stroke-width', '2');
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', 'M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z');
+          svg.appendChild(path);
+          placeholder.appendChild(svg);
+          cardEl.appendChild(placeholder);
+        }
+
+        const label = document.createElement('span');
+        label.className = 'card-label';
+        label.textContent = m.name;
+        cardEl.appendChild(label);
+
+        // Largura do card é variável (depende do nome): o wrapper se centraliza sobre a coordenada via CSS,
+        // e iconSize null evita o 12x12 padrão do divIcon espremer o conteúdo.
+        const anchorEl = document.createElement('div');
+        anchorEl.className = 'card-anchor';
+        anchorEl.appendChild(cardEl);
+
+        const icon = L.divIcon({
+          html: anchorEl,
+          className: '',
+          iconSize: null,
+          iconAnchor: [0, 0]
+        });
+
+        return L.marker([m.lat, m.lng], { icon });
+      }
+    };
+
+    const debouncedGeocode = Utils.debounce(async (lat, lng) => {
+      const addr = await GeoService.reverseGeocode(lat, lng);
+      const addrInput = document.getElementById('form-address');
+      const coordFeedback = document.getElementById('form-coord-feedback');
+      if (addr) {
+        addrInput.value = addr;
+        coordFeedback.textContent = 'Endereço atualizado via mapa.';
+      } else {
+        coordFeedback.textContent = 'Não foi possível obter endereço online. Digite manualmente se desejar.';
+      }
+    }, CONFIG.NOMINATIM_DEBOUNCE_MS);
+
+    // -------------------------------------------------------------
+    // 8. CONTROLADOR DE TELAS E FLUXOS DA INTERFACE
+    // -------------------------------------------------------------
+    const ViewController = {
+      async init() {
+        this.bindEvents();
+        // O mapa precisa existir antes de tema/localização/marcadores, que dependem de MapController.map
+        MapController.init();
+        this.setupTheme();
+        this.setupLocation();
+        this.handleHashChange();
+        try {
+          await this.loadAndRenderMoments();
+          this.checkBackupNotice();
+        } catch (err) {
+          console.error('Falha ao carregar momentos:', err);
+          UI.showToast('Não foi possível acessar o armazenamento local do navegador.');
+        }
+      },
+
+      setupTheme() {
+        let saved = null;
+        try {
+          saved = localStorage.getItem('momentos_theme');
+        } catch {}
+        if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          this.setTheme('dark');
+        } else {
+          this.setTheme('light');
+        }
+      },
+
+      setTheme(theme) {
+        AppState.theme = theme;
+        document.documentElement.setAttribute('data-theme', theme);
+        try {
+          localStorage.setItem('momentos_theme', theme);
+        } catch {}
+        MapController.updateTiles(theme);
+      },
+
+      setupLocation() {
+        // Tenta recuperar última coordenada conhecida para agilizar
+        try {
+          const lastLoc = localStorage.getItem('momentos_last_loc');
+          if (lastLoc) {
+            const parsed = JSON.parse(lastLoc);
+            if (parsed.lat && parsed.lng) {
+              MapController.map.setView([parsed.lat, parsed.lng], 13);
+            }
+          }
+        } catch {}
+
+        this.requestGeolocation(false);
+      },
+
+      requestGeolocation(userInitiated = false) {
+        if (!navigator.geolocation) {
+          if (userInitiated) UI.showToast('Geolocalização não é suportada neste navegador.');
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            MapController.setUserLocation(latitude, longitude);
+            MapController.map.setView([latitude, longitude], CONFIG.FOCUSED_ZOOM);
+            try {
+              localStorage.setItem('momentos_last_loc', JSON.stringify({ lat: latitude, lng: longitude }));
+            } catch {}
+            if (userInitiated) UI.showToast('Localização atualizada.');
+          },
+          (err) => {
+            if (userInitiated) {
+              let msg = 'Erro ao obter localização.';
+              if (err.code === err.PERMISSION_DENIED) msg = 'Permissão de localização negada.';
+              else if (err.code === err.TIMEOUT) msg = 'Tempo esgotado ao buscar sinal GPS.';
+              UI.showToast(msg);
+            }
+          },
+          { timeout: 10000, enableHighAccuracy: true, maximumAge: 60000 }
+        );
+      },
+
+      async loadAndRenderMoments() {
+        AppState.moments = await DB.getMoments();
+        await MapController.renderMomentMarkers(AppState.moments);
+        this.renderListView();
+      },
+
+      // Painéis e Bottom Sheets
+      closeAllPanels() {
+        document.getElementById('form-panel').classList.remove('active');
+        document.getElementById('detail-panel').classList.remove('active');
+        document.getElementById('backup-panel').classList.remove('active');
+        document.getElementById('panel-backdrop').classList.remove('active');
+        MapController.removeSelectionPin();
+      },
+
+      openCreateFlow() {
+        this.closeAllPanels();
+        AppState.isEditing = false;
+        AppState.draftPhotos = [];
+
+        document.getElementById('form-panel-title').textContent = 'Novo Momento';
+        document.getElementById('form-moment-id').value = '';
+        document.getElementById('form-name').value = '';
+        document.getElementById('form-date').value = Utils.todayIso();
+        document.getElementById('form-address').value = '';
+        document.getElementById('form-note').value = '';
+
+        this.setSelectedStyle('card');
+        this.renderPhotoUploadGrid();
+
+        // Pin inicial no centro da visualização atual do mapa
+        const center = MapController.map.getCenter();
+        MapController.setPinCoordinates(center.lat, center.lng, true);
+
+        this.showFormPanel();
+        this.checkFormValidity();
+      },
+
+      async openEditFlow(momentId) {
+        const m = await DB.getMomentById(momentId);
+        if (!m) return;
+
+        this.closeAllPanels();
+        AppState.isEditing = true;
+        AppState.draftPhotos = [];
+
+        document.getElementById('form-panel-title').textContent = 'Editar Momento';
+        document.getElementById('form-moment-id').value = m.id;
+        document.getElementById('form-name').value = m.name;
+        document.getElementById('form-date').value = m.date;
+        document.getElementById('form-address').value = m.address || '';
+        document.getElementById('form-note').value = m.note || '';
+
+        this.setSelectedStyle(m.markerStyle || 'card');
+
+        // Carrega fotos existentes como rascunhos
+        const existingPhotos = await DB.getPhotosForMoment(m.id);
+        AppState.draftPhotos = existingPhotos.map((p) => ({
+          id: p.id,
+          blob: p.fullBlob,
+          thumbBlob: p.thumbBlob,
+          previewUrl: AppState.createThumbUrl(p.id, p.thumbBlob),
+          isExisting: true,
+          isCover: p.id === m.coverPhotoId
+        }));
+
+        this.renderPhotoUploadGrid();
+        MapController.setPinCoordinates(m.lat, m.lng, false);
+
+        this.showFormPanel();
+        this.checkFormValidity();
+      },
+
+      // O formulário abre SEM backdrop: o mapa precisa continuar clicável para posicionar o pin.
+      // Depois reenquadra o mapa para o pin ficar na área visível (acima do sheet no mobile, ao lado do painel no desktop).
+      showFormPanel() {
+        document.getElementById('form-panel').classList.add('active');
+
+        const pin = AppState.activePinCoords;
+        if (!pin) return;
+        const map = MapController.map;
+        const size = map.getSize();
+        const isMobile = window.matchMedia('(max-width: 767px)').matches;
+        const target = isMobile
+          ? { x: size.x / 2, y: size.y * 0.25 }
+          : { x: (size.x - 440) / 2, y: size.y / 2 };
+        const current = map.latLngToContainerPoint([pin.lat, pin.lng]);
+        map.panBy([current.x - target.x, current.y - target.y]);
+      },
+
+      async openDetail(momentId) {
+        const m = await DB.getMomentById(momentId);
+        if (!m) return;
+
+        this.closeAllPanels();
+        AppState.activeMoment = m;
+
+        document.getElementById('detail-title').textContent = m.name;
+        document.getElementById('detail-date-text').textContent = Utils.formatDate(m.date);
+        
+        const addrContainer = document.getElementById('detail-address-container');
+        const addrText = document.getElementById('detail-address-text');
+        if (m.address) {
+          addrText.textContent = m.address;
+          addrContainer.style.display = 'flex';
+        } else {
+          addrContainer.style.display = 'none';
+        }
+
+        const noteText = document.getElementById('detail-note-text');
+        if (m.note) {
+          noteText.textContent = m.note;
+          noteText.style.display = 'block';
+        } else {
+          noteText.style.display = 'none';
+        }
+
+        // Galeria de Fotos no Detalhe
+        await this.setupDetailGallery(m);
+
+        document.getElementById('panel-backdrop').classList.add('active');
+        document.getElementById('detail-panel').classList.add('active');
+      },
+
+      galleryPhotos: [],
+      currentGalleryIndex: 0,
+
+      async setupDetailGallery(moment) {
+        const container = document.getElementById('detail-gallery-container');
+        const img = document.getElementById('detail-gallery-img');
+        const prevBtn = document.getElementById('btn-gallery-prev');
+        const nextBtn = document.getElementById('btn-gallery-next');
+        const counter = document.getElementById('detail-gallery-counter');
+
+        const photos = await DB.getPhotosForMoment(moment.id);
+        this.galleryPhotos = photos;
+        this.currentGalleryIndex = 0;
+
+        if (photos.length === 0) {
+          container.style.display = 'none';
+          return;
+        }
+
+        container.style.display = 'block';
+        this.updateGalleryView();
+
+        prevBtn.onclick = () => {
+          this.currentGalleryIndex = (this.currentGalleryIndex - 1 + this.galleryPhotos.length) % this.galleryPhotos.length;
+          this.updateGalleryView();
+        };
+
+        nextBtn.onclick = () => {
+          this.currentGalleryIndex = (this.currentGalleryIndex + 1) % this.galleryPhotos.length;
+          this.updateGalleryView();
+        };
+
+        img.onclick = () => {
+          const current = this.galleryPhotos[this.currentGalleryIndex];
+          if (current) {
+            const fullUrl = AppState.createThumbUrl(current.id + '_full', current.fullBlob);
+            document.getElementById('lightbox-img').src = fullUrl;
+            document.getElementById('lightbox-modal').classList.add('active');
+          }
+        };
+      },
+
+      updateGalleryView() {
+        const img = document.getElementById('detail-gallery-img');
+        const counter = document.getElementById('detail-gallery-counter');
+        const prevBtn = document.getElementById('btn-gallery-prev');
+        const nextBtn = document.getElementById('btn-gallery-next');
+
+        const current = this.galleryPhotos[this.currentGalleryIndex];
+        if (!current) return;
+
+        img.src = AppState.createThumbUrl(current.id, current.thumbBlob);
+        counter.textContent = `${this.currentGalleryIndex + 1} de ${this.galleryPhotos.length}`;
+
+        prevBtn.style.display = this.galleryPhotos.length > 1 ? 'flex' : 'none';
+        nextBtn.style.display = this.galleryPhotos.length > 1 ? 'flex' : 'none';
+      },
+
+      setSelectedStyle(style) {
+        document.querySelectorAll('.style-option').forEach((el) => {
+          const isSelected = el.getAttribute('data-style') === style;
+          el.classList.toggle('selected', isSelected);
+          el.setAttribute('aria-checked', String(isSelected));
+        });
+      },
+
+      getSelectedStyle() {
+        const selected = document.querySelector('.style-option.selected');
+        return selected ? selected.getAttribute('data-style') : 'card';
+      },
+
+      checkFormValidity() {
+        const nameVal = document.getElementById('form-name').value.trim();
+        const dateVal = document.getElementById('form-date').value;
+        const latVal = document.getElementById('form-lat').value;
+        const lngVal = document.getElementById('form-lng').value;
+        const saveBtn = document.getElementById('btn-save-moment');
+
+        const isValid = Boolean(nameVal && dateVal && latVal && lngVal);
+        saveBtn.disabled = !isValid;
+      },
+
+      renderPhotoUploadGrid() {
+        const grid = document.getElementById('form-photo-grid');
+        grid.textContent = ''; // Limpa nós com segurança
+
+        AppState.draftPhotos.forEach((photo, index) => {
+          const item = document.createElement('div');
+          item.className = 'photo-preview-item' + (photo.isCover ? ' is-cover' : '');
+
+          const img = document.createElement('img');
+          img.src = photo.previewUrl;
+          img.alt = `Foto ${index + 1}`;
+          item.appendChild(img);
+
+          const actions = document.createElement('div');
+          actions.className = 'photo-preview-actions';
+
+          // Botão Definir Capa
+          const btnCover = document.createElement('button');
+          btnCover.type = 'button';
+          btnCover.className = 'photo-mini-btn';
+          btnCover.title = 'Definir como capa';
+          const starSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          starSvg.setAttribute('width', '14');
+          starSvg.setAttribute('height', '14');
+          starSvg.setAttribute('viewBox', '0 0 24 24');
+          starSvg.setAttribute('fill', photo.isCover ? 'var(--accent)' : 'none');
+          starSvg.setAttribute('stroke', 'currentColor');
+          starSvg.setAttribute('stroke-width', '2');
+          const starPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          starPath.setAttribute('d', 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z');
+          starSvg.appendChild(starPath);
+          btnCover.appendChild(starSvg);
+
+          btnCover.onclick = (e) => {
+            e.stopPropagation();
+            AppState.draftPhotos.forEach((p) => { p.isCover = false; });
+            photo.isCover = true;
+            this.renderPhotoUploadGrid();
+          };
+
+          // Botão Remover
+          const btnDel = document.createElement('button');
+          btnDel.type = 'button';
+          btnDel.className = 'photo-mini-btn';
+          btnDel.title = 'Remover foto';
+          const trashSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          trashSvg.setAttribute('width', '14');
+          trashSvg.setAttribute('height', '14');
+          trashSvg.setAttribute('viewBox', '0 0 24 24');
+          trashSvg.setAttribute('fill', 'none');
+          trashSvg.setAttribute('stroke', 'var(--danger)');
+          trashSvg.setAttribute('stroke-width', '2');
+          const trashLine1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          trashLine1.setAttribute('x1', '18'); trashLine1.setAttribute('y1', '6');
+          trashLine1.setAttribute('x2', '6'); trashLine1.setAttribute('y2', '18');
+          const trashLine2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          trashLine2.setAttribute('x1', '6'); trashLine2.setAttribute('y1', '6');
+          trashLine2.setAttribute('x2', '18'); trashLine2.setAttribute('y2', '18');
+          trashSvg.appendChild(trashLine1);
+          trashSvg.appendChild(trashLine2);
+          btnDel.appendChild(trashSvg);
+
+          btnDel.onclick = (e) => {
+            e.stopPropagation();
+            AppState.draftPhotos.splice(index, 1);
+            if (photo.isCover && AppState.draftPhotos.length > 0) {
+              AppState.draftPhotos[0].isCover = true;
+            }
+            this.renderPhotoUploadGrid();
+          };
+
+          actions.appendChild(btnCover);
+          actions.appendChild(btnDel);
+          item.appendChild(actions);
+          grid.appendChild(item);
+        });
+
+        // Garante que exista pelo menos uma capa caso haja fotos
+        if (AppState.draftPhotos.length > 0 && !AppState.draftPhotos.some((p) => p.isCover)) {
+          AppState.draftPhotos[0].isCover = true;
+        }
+      },
+
+      // Lista de Lugares
+      renderListView() {
+        const container = document.getElementById('list-items-container');
+        container.textContent = ''; // DOM seguro
+
+        const query = document.getElementById('list-search-input').value.toLowerCase().trim();
+        const sortVal = document.getElementById('list-sort-select').value;
+
+        let filtered = AppState.moments.filter((m) => {
+          if (!query) return true;
+          return m.name.toLowerCase().includes(query) ||
+                 (m.address && m.address.toLowerCase().includes(query)) ||
+                 (m.note && m.note.toLowerCase().includes(query));
+        });
+
+        filtered.sort((a, b) => {
+          if (sortVal === 'date-desc') return b.date.localeCompare(a.date);
+          if (sortVal === 'date-asc') return a.date.localeCompare(b.date);
+          if (sortVal === 'name-asc') return a.name.localeCompare(b.name, 'pt-BR');
+          return 0;
+        });
+
+        if (filtered.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'empty-state';
+          const icon = document.createElement('div');
+          icon.className = 'empty-state-icon';
+          const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.setAttribute('width', '24');
+          svg.setAttribute('height', '24');
+          svg.setAttribute('viewBox', '0 0 24 24');
+          svg.setAttribute('fill', 'none');
+          svg.setAttribute('stroke', 'currentColor');
+          svg.setAttribute('stroke-width', '2');
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', 'M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z');
+          svg.appendChild(path);
+          icon.appendChild(svg);
+          empty.appendChild(icon);
+
+          const h3 = document.createElement('h3');
+          h3.textContent = query ? 'Nenhum momento encontrado' : 'Nenhum momento registrado ainda';
+          empty.appendChild(h3);
+
+          const p = document.createElement('p');
+          p.textContent = query ? 'Tente outros termos de busca.' : 'Toque em "Registrar" para eternizar seu primeiro lugar no mapa.';
+          empty.appendChild(p);
+
+          container.appendChild(empty);
+          return;
+        }
+
+        for (const m of filtered) {
+          const item = document.createElement('article');
+          item.className = 'moment-card-item';
+          item.tabIndex = 0;
+
+          // Placeholder inicial para imagem
+          const thumbPlaceholder = document.createElement('div');
+          thumbPlaceholder.className = 'moment-card-thumb-placeholder';
+          const svgHeart = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svgHeart.setAttribute('width', '20');
+          svgHeart.setAttribute('height', '20');
+          svgHeart.setAttribute('viewBox', '0 0 24 24');
+          svgHeart.setAttribute('fill', 'none');
+          svgHeart.setAttribute('stroke', 'currentColor');
+          svgHeart.setAttribute('stroke-width', '1.8');
+          const pathHeart = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          pathHeart.setAttribute('d', 'M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z');
+          svgHeart.appendChild(pathHeart);
+          thumbPlaceholder.appendChild(svgHeart);
+          item.appendChild(thumbPlaceholder);
+
+          if (m.coverPhotoId) {
+            DB.getPhotoById(m.coverPhotoId).then((rec) => {
+              if (rec && rec.thumbBlob) {
+                const img = document.createElement('img');
+                img.src = AppState.createThumbUrl(rec.id, rec.thumbBlob);
+                img.alt = m.name;
+                img.loading = 'lazy';
+                img.decoding = 'async';
+                item.replaceChild(img, thumbPlaceholder);
+              }
+            });
+          }
+
+          const info = document.createElement('div');
+          info.className = 'moment-card-info';
+
+          const title = document.createElement('h2');
+          title.className = 'moment-card-title';
+          title.textContent = m.name;
+          info.appendChild(title);
+
+          const date = document.createElement('span');
+          date.className = 'moment-card-date';
+          date.textContent = Utils.formatDate(m.date);
+          info.appendChild(date);
+
+          if (m.address) {
+            const addr = document.createElement('span');
+            addr.className = 'moment-card-address';
+            addr.textContent = m.address;
+            info.appendChild(addr);
+          }
+
+          item.appendChild(info);
+
+          const selectMoment = () => {
+            window.location.hash = '';
+            MapController.map.setView([m.lat, m.lng], CONFIG.FOCUSED_ZOOM);
+            this.openDetail(m.id);
+          };
+
+          item.onclick = selectMoment;
+          item.onkeydown = (e) => { if (e.key === 'Enter') selectMoment(); };
+
+          container.appendChild(item);
+        }
+      },
+
+      checkBackupNotice() {
+        try {
+          const lastBackup = localStorage.getItem('momentos_last_backup');
+          if (lastBackup) {
+            const diffDays = (Date.now() - Number(lastBackup)) / (1000 * 60 * 60 * 24);
+            if (diffDays > 30 && AppState.moments.length > 0) {
+              UI.showToast('Lembrete: realize um backup dos seus momentos.');
+            }
+          }
+        } catch {}
+      },
+
+      handleHashChange() {
+        const hash = window.location.hash;
+        const listView = document.getElementById('list-view');
+        if (hash === '#/lista') {
+          listView.classList.add('active');
+          this.renderListView();
+        } else {
+          listView.classList.remove('active');
+        }
+      },
+
+      bindEvents() {
+        // Alternância de Rota / Views
+        window.addEventListener('hashchange', () => this.handleHashChange());
+        document.getElementById('btn-toggle-view').onclick = () => { window.location.hash = '#/lista'; };
+        document.getElementById('btn-close-list').onclick = () => { window.location.hash = ''; };
+
+        // Alternância de Tema
+        document.getElementById('btn-toggle-theme').onclick = () => {
+          this.setTheme(AppState.theme === 'dark' ? 'light' : 'dark');
+        };
+
+        // Centralizar
+        document.getElementById('btn-locate-me').onclick = () => this.requestGeolocation(true);
+
+        // Abertura de Painéis
+        document.getElementById('btn-open-create').onclick = () => this.openCreateFlow();
+        document.getElementById('btn-open-backup').onclick = () => {
+          this.closeAllPanels();
+          document.getElementById('panel-backdrop').classList.add('active');
+          document.getElementById('backup-panel').classList.add('active');
+        };
+
+        // Fechamentos
+        const closeHandler = async () => {
+          const formPanel = document.getElementById('form-panel');
+          if (formPanel.classList.contains('active')) {
+            const confirmed = await UI.confirm('Descartar alterações?', 'Os dados não salvos serão perdidos.');
+            if (!confirmed) return;
+          }
+          this.closeAllPanels();
+        };
+
+        document.getElementById('btn-close-form').onclick = closeHandler;
+        document.getElementById('btn-cancel-form').onclick = closeHandler;
+        document.getElementById('btn-close-detail').onclick = () => this.closeAllPanels();
+        document.getElementById('btn-close-backup').onclick = () => this.closeAllPanels();
+        document.getElementById('panel-backdrop').onclick = closeHandler;
+
+        // Validação reativa do formulário
+        ['form-name', 'form-date', 'form-address'].forEach((id) => {
+          document.getElementById(id).addEventListener('input', () => this.checkFormValidity());
+        });
+
+        // Seletores de estilo
+        document.querySelectorAll('.style-option').forEach((el) => {
+          el.onclick = () => this.setSelectedStyle(el.getAttribute('data-style'));
+          el.onkeydown = (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              this.setSelectedStyle(el.getAttribute('data-style'));
+            }
+          };
+        });
+
+        // Upload de Fotos
+        const photoInput = document.getElementById('form-photo-input');
+        document.getElementById('btn-trigger-file').onclick = () => photoInput.click();
+
+        photoInput.onchange = async () => {
+          const files = Array.from(photoInput.files || []);
+          if (files.length === 0) return;
+
+          const remainingSlots = CONFIG.MAX_PHOTOS_PER_MOMENT - AppState.draftPhotos.length;
+          if (remainingSlots <= 0) {
+            UI.showToast(`Limite máximo de ${CONFIG.MAX_PHOTOS_PER_MOMENT} fotos atingido.`);
+            photoInput.value = '';
+            return;
+          }
+
+          const selectedFiles = files.slice(0, remainingSlots);
+          for (const file of selectedFiles) {
+            try {
+              UI.showToast(`Processando ${file.name}...`);
+              const compressed = await ImageService.compressFile(file);
+              const draftId = Utils.uuid();
+              AppState.draftPhotos.push({
+                id: draftId,
+                blob: compressed.fullBlob,
+                thumbBlob: compressed.thumbBlob,
+                previewUrl: AppState.createThumbUrl(draftId, compressed.thumbBlob),
+                isExisting: false,
+                isCover: AppState.draftPhotos.length === 0
+              });
+            } catch (err) {
+              UI.showToast(err.message || 'Erro ao carregar imagem.');
+            }
+          }
+
+          this.renderPhotoUploadGrid();
+          photoInput.value = '';
+        };
+
+        // Salvar Momento
+        document.getElementById('btn-save-moment').onclick = async () => {
+          await this.handleSaveMoment();
+        };
+
+        // Ações de Detalhe
+        document.getElementById('btn-edit-moment').onclick = () => {
+          if (AppState.activeMoment) this.openEditFlow(AppState.activeMoment.id);
+        };
+
+        document.getElementById('btn-delete-moment').onclick = async () => {
+          if (!AppState.activeMoment) return;
+          const ok = await UI.confirm('Excluir momento?', 'Esta ação não pode ser desfeita e removerá todas as fotos.');
+          if (!ok) return;
+
+          await DB.deleteMoment(AppState.activeMoment.id);
+          UI.showToast('Momento excluído.');
+          this.closeAllPanels();
+          await this.loadAndRenderMoments();
+        };
+
+        // Lightbox
+        document.getElementById('btn-close-lightbox').onclick = () => {
+          document.getElementById('lightbox-modal').classList.remove('active');
+        };
+        document.getElementById('lightbox-modal').onclick = (e) => {
+          if (e.target.id === 'lightbox-modal') {
+            document.getElementById('lightbox-modal').classList.remove('active');
+          }
+        };
+
+        // Filtros de Lista
+        document.getElementById('list-search-input').oninput = () => this.renderListView();
+        document.getElementById('list-sort-select').onchange = () => this.renderListView();
+
+        // Backup & Persistência
+        document.getElementById('btn-export-json').onclick = async () => {
+          try {
+            await BackupService.exportBackup();
+            UI.showToast('Backup exportado com sucesso.');
+          } catch {
+            UI.showToast('Falha ao exportar backup.');
+          }
+        };
+
+        const backupInput = document.getElementById('backup-file-input');
+        document.getElementById('btn-trigger-import').onclick = () => backupInput.click();
+        backupInput.onchange = async () => {
+          const file = backupInput.files?.[0];
+          if (!file) return;
+
+          try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+            const ok = await UI.confirm('Restaurar backup?', 'Os momentos deste arquivo serão mesclados aos existentes.');
+            if (!ok) return;
+
+            await BackupService.importBackup(data);
+            UI.showToast('Backup importado com sucesso!');
+            await this.loadAndRenderMoments();
+            this.closeAllPanels();
+          } catch (err) {
+            UI.showToast(err.message || 'Arquivo de backup inválido.');
+          } finally {
+            backupInput.value = '';
+          }
+        };
+
+        document.getElementById('btn-persist-storage').onclick = async () => {
+          const label = document.getElementById('persist-status-label');
+          if (navigator.storage && navigator.storage.persist) {
+            const isPersisted = await navigator.storage.persist();
+            label.textContent = isPersisted
+              ? 'Armazenamento persistente ativado com sucesso.'
+              : 'Navegador não concedeu permissão persistente irrevogável.';
+          } else {
+            label.textContent = 'API de persistência não suportada neste navegador.';
+          }
+        };
+
+        // Tecla ESC global para fechar modais/painéis
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            if (document.getElementById('lightbox-modal').classList.contains('active')) {
+              document.getElementById('lightbox-modal').classList.remove('active');
+            } else {
+              closeHandler(); // passa pela confirmação quando há formulário aberto
+            }
+          }
+        });
+      },
+
+      async handleSaveMoment() {
+        const saveBtn = document.getElementById('btn-save-moment');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Gravando...';
+
+        try {
+          const id = document.getElementById('form-moment-id').value || Utils.uuid();
+          const name = Utils.safeString(document.getElementById('form-name').value, 80);
+          const date = document.getElementById('form-date').value;
+          const address = Utils.safeString(document.getElementById('form-address').value, 200);
+          const note = Utils.safeString(document.getElementById('form-note').value, 1000);
+          const lat = parseFloat(document.getElementById('form-lat').value);
+          const lng = parseFloat(document.getElementById('form-lng').value);
+          const markerStyle = this.getSelectedStyle();
+
+          const coverDraft = AppState.draftPhotos.find((p) => p.isCover) || AppState.draftPhotos[0];
+          const coverPhotoId = coverDraft ? coverDraft.id : null;
+          const photoIds = AppState.draftPhotos.map((p) => p.id);
+
+          const newPhotoRecords = [];
+          for (const dp of AppState.draftPhotos) {
+            if (!dp.isExisting) {
+              newPhotoRecords.push({
+                id: dp.id,
+                momentId: id,
+                fullBlob: dp.blob,
+                thumbBlob: dp.thumbBlob,
+                width: 0,
+                height: 0,
+                createdAt: Date.now()
+              });
+            }
+          }
+
+          // Identifica fotos excluídas durante a edição
+          let photoIdsToDelete = [];
+          if (AppState.isEditing) {
+            const currentSavedPhotos = await DB.getPhotosForMoment(id);
+            const remainingIds = new Set(photoIds);
+            photoIdsToDelete = currentSavedPhotos
+              .filter((p) => !remainingIds.has(p.id))
+              .map((p) => p.id);
+          }
+
+          const momentRecord = {
+            id,
+            name,
+            date,
+            address,
+            note,
+            lat,
+            lng,
+            markerStyle,
+            coverPhotoId,
+            photoIds,
+            updatedAt: Date.now(),
+            createdAt: AppState.isEditing ? (AppState.activeMoment?.createdAt || Date.now()) : Date.now()
+          };
+
+          await DB.saveMomentWithPhotos(momentRecord, newPhotoRecords, photoIdsToDelete);
+
+          UI.showToast('Momento salvo com carinho!');
+          this.closeAllPanels();
+          await this.loadAndRenderMoments();
+
+          // Anima mapa até o local registrado
+          MapController.map.flyTo([lat, lng], CONFIG.FOCUSED_ZOOM, { duration: 1.2 });
+        } catch (err) {
+          if (err.name === 'QuotaExceededError') {
+            UI.showToast('Erro: Memória do navegador cheia. Exclua fotos antigas.');
+          } else {
+            UI.showToast('Não foi possível salvar o momento.');
+          }
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Salvar';
+        }
+      }
+    };
+
+    // -------------------------------------------------------------
+    // 9. MONITOR GLOBAL DE ERROS & INICIALIZAÇÃO
+    // -------------------------------------------------------------
+    window.addEventListener('unhandledrejection', (event) => {
+      // Degradação amigável sem quebrar o app; o erro real fica no console para diagnóstico
+      console.error('Promise rejeitada sem tratamento:', event.reason);
+      UI.showToast('Ocorreu uma operação inesperada.');
+      event.preventDefault();
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      ViewController.init();
+    });
+  </script>
+</body>
+</html>
