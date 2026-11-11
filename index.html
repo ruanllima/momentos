@@ -9,7 +9,7 @@
     script-src 'self' 'unsafe-inline' https://unpkg.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;
     font-src https://fonts.gstatic.com;
-    img-src 'self' blob: data: https://tile.openstreetmap.org https://server.arcgisonline.com https://*.tile.opentopomap.org;
+    img-src 'self' blob: data: https://tile.openstreetmap.org https://server.arcgisonline.com https://*.tile.opentopomap.org https://*.basemaps.cartocdn.com;
     connect-src 'self' blob: https://nominatim.openstreetmap.org;
   ">
   <title>Mapa de Momentos</title>
@@ -1418,7 +1418,7 @@
         standard: {
           label: 'Padrão',
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" rel="noopener noreferrer">OpenStreetMap</a>',
-          layers: [{ url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png' }]
+          layers: [{ url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', subdomains: 'abcd' }]
         },
         satellite: {
           label: 'Satélite',
