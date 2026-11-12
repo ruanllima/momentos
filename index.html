@@ -55,7 +55,7 @@
       --radius-full: 9999px;
 
       --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
-      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
       --shadow-sheet: 0 -4px 28px rgba(0, 0, 0, 0.08);
 
       --transition-fast: 180ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -88,7 +88,7 @@
       --accent-ring: rgba(196, 105, 99, 0.35);
 
       --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
       --shadow-sheet: 0 -4px 28px rgba(0, 0, 0, 0.5);
     }
 
@@ -130,7 +130,7 @@
       background-color: var(--bg-subtle);
     }
 
-    /* Tema escuro do mapa: inverte os tiles claros do mapa padrão */
+    /* Tema escuro do mapa */
     #map-view.map-dark .leaflet-tile-pane {
       filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.7);
     }
@@ -435,7 +435,7 @@
     .btn-icon:active {
       transform: scale(0.96);
     }
-    .btn-icon:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+    .btn-icon:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, a:focus-visible {
       outline: 2px solid var(--accent);
       outline-offset: 2px;
     }
@@ -477,6 +477,7 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      text-decoration: none;
     }
     .btn-secondary:hover {
       background: var(--bg-surface-elevated);
@@ -719,7 +720,7 @@
         transform: translateY(0);
       }
       #form-panel {
-        max-height: 62dvh;
+        max-height: 68dvh;
       }
     }
 
@@ -788,6 +789,23 @@
       flex-direction: column;
       gap: 4px;
     }
+    .detail-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .detail-place-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      background: var(--accent-light);
+      color: var(--accent);
+      border: 1px solid var(--border-subtle);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
     .detail-title {
       font-family: var(--font-serif);
       font-size: 25px;
@@ -819,6 +837,34 @@
       color: var(--text-subtle);
     }
 
+    /* Botão Minimalista de Redirecionamento para o Google Maps */
+    .detail-gmaps-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      align-self: flex-start;
+      margin-top: 8px;
+      padding: 6px 12px;
+      min-height: 34px;
+      border-radius: var(--radius-full);
+      background: var(--bg-page);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      font-size: 12px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+    }
+    .detail-gmaps-link:hover {
+      background: var(--accent-light);
+      border-color: var(--accent-ring);
+      color: var(--accent);
+    }
+    .detail-gmaps-link svg {
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
     .panel-body {
       flex: 1;
       overflow-y: auto;
@@ -842,6 +888,7 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
+      position: relative;
     }
     .form-group label {
       font-size: 13px;
@@ -869,6 +916,138 @@
     .field-hint {
       font-size: 12px;
       color: var(--text-subtle);
+    }
+
+    /* =============================================================
+       AUTOCOMPLETE DE LUGARES (BUSCA NO MAPA AO DIGITAR NOME)
+       ============================================================= */
+    .place-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .place-input-wrapper .form-control {
+      padding-right: 38px;
+    }
+    .place-search-spinner {
+      position: absolute;
+      right: 12px;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border-subtle);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+      pointer-events: none;
+    }
+    .place-search-spinner.active {
+      display: block;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .place-suggestions-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-focus);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      max-height: 360px;
+      overflow-y: auto;
+      z-index: 30;
+      display: none;
+      flex-direction: column;
+      padding: 4px;
+    }
+    .place-suggestions-dropdown.active {
+      display: flex;
+    }
+    .place-suggestion-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 12px;
+      min-height: 44px;
+      border: none;
+      background: transparent;
+      color: var(--text-main);
+      border-radius: var(--radius-sm);
+      text-align: left;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: background-color var(--transition-fast);
+    }
+    .place-suggestion-item:hover,
+    .place-suggestion-item[aria-selected="true"] {
+      background: var(--bg-surface-elevated);
+    }
+    .place-suggestion-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      background: var(--accent-light);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .place-suggestion-text {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .place-suggestion-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .place-suggestion-addr {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .place-linked-pill {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      background: var(--accent-light);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .place-linked-pill.active {
+      display: flex;
+    }
+    .place-linked-clear {
+      background: transparent;
+      border: none;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .place-linked-clear:hover {
+      background: rgba(154, 72, 67, 0.12);
     }
 
     /* =============================================================
@@ -1114,7 +1293,6 @@
       transform-origin: 0 0;
       will-change: transform;
     }
-    /* Grade regra dos terços sutil para precisão editorial */
     .crop-grid-overlay {
       position: absolute;
       inset: 0;
@@ -1440,10 +1618,11 @@
         </button>
       </div>
 
-      <form id="moment-form" class="panel-body">
+      <form id="moment-form" class="panel-body" autocomplete="off">
         <input type="hidden" id="form-moment-id">
         <input type="hidden" id="form-lat">
         <input type="hidden" id="form-lng">
+        <input type="hidden" id="form-place-category">
 
         <!-- Fotos com Mosaico Editorial Dinâmico -->
         <div class="form-group photo-upload-zone">
@@ -1459,10 +1638,19 @@
           <span class="field-hint">Toque no ícone de recorte em cada foto para ajustar o enquadramento 1×1 do preview. A foto inteira continua salva.</span>
         </div>
 
-        <!-- Nome -->
+        <!-- Nome com Busca Inteligente de Estabelecimentos -->
         <div class="form-group">
           <label for="form-name">Nome do Lugar ou Momento *</label>
-          <input type="text" id="form-name" class="form-control" maxlength="80" required placeholder="Ex.: Café na Praia, Jantar Especial">
+          <div class="place-input-wrapper">
+            <input type="text" id="form-name" class="form-control" maxlength="80" required placeholder="Digite para buscar uma loja ou escreva um nome..." role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="place-suggestions-list">
+            <div id="place-search-spinner" class="place-search-spinner" aria-hidden="true"></div>
+          </div>
+          <div id="place-suggestions-list" class="place-suggestions-dropdown" role="listbox" aria-label="Sugestões de lugares"></div>
+          <span class="field-hint">Busca pública do OpenStreetMap. Selecione uma sugestão para posicionar o pin; ou continue com um nome próprio.</span>
+          <div id="place-linked-pill" class="place-linked-pill">
+            <span id="place-linked-label">Local vinculado pelo mapa</span>
+            <button type="button" id="btn-clear-linked-place" class="place-linked-clear">Desvincular</button>
+          </div>
         </div>
 
         <!-- Data -->
@@ -1474,8 +1662,8 @@
         <!-- Localização e Endereço -->
         <div class="form-group">
           <label for="form-address">Endereço / Referência</label>
-          <input type="text" id="form-address" class="form-control" placeholder="Arraste o pin no mapa para preencher">
-          <span class="field-hint" id="form-coord-feedback">Posicione o pin no mapa.</span>
+          <input type="text" id="form-address" class="form-control" placeholder="Busque pelo nome acima, arraste o pin ou digite">
+          <span class="field-hint" id="form-coord-feedback">Posicione o pin no mapa ou selecione um lugar na busca.</span>
         </div>
 
         <!-- Nota -->
@@ -1496,12 +1684,24 @@
       <div class="detail-panel-header">
         <div class="panel-grabber"></div>
         <div class="detail-header-stack">
-          <h2 class="detail-title" id="detail-title"></h2>
+          <div class="detail-title-row">
+            <span id="detail-place-badge" class="detail-place-badge" style="display: none;" aria-hidden="true"></span>
+            <h2 class="detail-title" id="detail-title"></h2>
+          </div>
           <span class="detail-date-badge" id="detail-date-text"></span>
           <div class="detail-address" id="detail-address-container">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
             <span id="detail-address-text"></span>
           </div>
+          <a id="detail-gmaps-link" class="detail-gmaps-link" href="#" target="_blank" rel="noopener noreferrer" aria-label="Abrir este lugar no Google Maps">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            <span>Abrir no Google Maps</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);">
+              <path d="M7 17 17 7"/><path d="M7 7h10v10"/>
+            </svg>
+          </a>
         </div>
         <button id="btn-close-detail" class="btn-icon" aria-label="Fechar detalhes" type="button">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -1664,13 +1864,14 @@
       DB_VERSION: 1,
       MAX_PHOTOS_PER_MOMENT: 12,
       MAX_IMAGE_RAW_SIZE_MB: 15,
-      IMAGE_MAX_DIMENSION: 1920,        // Alta resolução para visualização completa no Lightbox
-      PREVIEW_SQUARE_DIMENSION: 800,    // Alta nitidez para previews 1x1 nos detalhes e criação
-      MAP_CARD_THUMB_DIMENSION: 160,    // Leve e rápido exclusivamente para os cards do mapa
+      IMAGE_MAX_DIMENSION: 1920,
+      PREVIEW_SQUARE_DIMENSION: 800,
+      MAP_CARD_THUMB_DIMENSION: 160,
       IMAGE_JPEG_QUALITY: 0.88,
       PREVIEW_JPEG_QUALITY: 0.86,
       MAP_THUMB_JPEG_QUALITY: 0.78,
       NOMINATIM_DEBOUNCE_MS: 800,
+      PLACE_SEARCH_DEBOUNCE_MS: 650,
       DEFAULT_COORDS: [-14.235, -51.925],
       DEFAULT_ZOOM: 5,
       FOCUSED_ZOOM: 16,
@@ -1773,6 +1974,76 @@
           clearTimeout(timer);
           timer = setTimeout(() => fn.apply(this, args), delay);
         };
+      },
+
+      // Gera link oficial universal do Google Maps para abrir a ficha/localização da loja
+      buildGoogleMapsUrl(moment) {
+        const name = Utils.safeString(moment?.name || '', 80);
+        const addr = Utils.safeString(moment?.address || '', 200);
+        const lat = Number(moment?.lat);
+        const lng = Number(moment?.lng);
+
+        const queryParts = [];
+        if (name) queryParts.push(name);
+        if (addr) queryParts.push(addr);
+
+        let queryText = queryParts.join(', ');
+        if (!queryText && Number.isFinite(lat) && Number.isFinite(lng)) {
+          queryText = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+        }
+
+        const url = new URL('https://www.google.com/maps/search/');
+        url.searchParams.set('api', '1');
+        url.searchParams.set('query', queryText);
+        return url.toString();
+      },
+
+      // Cria ícone vetorial minimalista baseado na categoria do lugar (sem inventar imagens)
+      createCategorySvg(category) {
+        const SVG_NS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(SVG_NS, 'svg');
+        svg.setAttribute('width', '15');
+        svg.setAttribute('height', '15');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '1.9');
+        svg.setAttribute('stroke-linecap', 'round');
+        svg.setAttribute('stroke-linejoin', 'round');
+
+        const addPath = (d) => {
+          const p = document.createElementNS(SVG_NS, 'path');
+          p.setAttribute('d', d);
+          svg.appendChild(p);
+        };
+
+        if (category === 'food') {
+          // Café / Confeitaria / Restaurante
+          addPath('M17 8h1a4 4 0 1 1 0 8h-1');
+          addPath('M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z');
+          addPath('M6 2v2');
+          addPath('M10 2v2');
+          addPath('M14 2v2');
+        } else if (category === 'shop') {
+          // Loja / Comércio
+          addPath('m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7');
+          addPath('M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8');
+          addPath('M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4');
+          addPath('M2 7h20');
+        } else if (category === 'nature') {
+          // Parque / Praia / Passeio
+          addPath('M17 14c.94-.94 2-2.2 2-4a7 7 0 1 0-14 0c0 1.8 1.06 3.06 2 4l5 5Z');
+          addPath('M12 19v3');
+        } else {
+          // Pin minimalista padrão
+          addPath('M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z');
+          const c = document.createElementNS(SVG_NS, 'circle');
+          c.setAttribute('cx', '12');
+          c.setAttribute('cy', '10');
+          c.setAttribute('r', '3');
+          svg.appendChild(c);
+        }
+        return svg;
       }
     };
 
@@ -1917,10 +2188,9 @@
     };
 
     // -------------------------------------------------------------
-    // 4. SERVIÇOS: IMAGEM (ALTA QUALIDADE + CROP 1x1), GEO E BACKUP
+    // 4. SERVIÇOS: IMAGEM, GEOCODIFICAÇÃO REVERSA, BUSCA DE LUGARES E BACKUP
     // -------------------------------------------------------------
     const ImageService = {
-      // Estado padrão de crop normalizado: zoom >= 1, panX/panY em [-0.5, 0.5] relativos à janela
       defaultCrop() {
         return { zoom: 1, panX: 0, panY: 0 };
       },
@@ -1968,7 +2238,6 @@
         return { previewBlob, thumbBlob };
       },
 
-      // Renderiza exatamente a janela quadrada 1x1 escolhida pelo usuário a partir da foto original
       renderSquareCrop(bitmap, crop, outputSize, quality) {
         return new Promise((resolve, reject) => {
           const srcW = bitmap.width;
@@ -1977,11 +2246,9 @@
           const panX = Number(crop?.panX) || 0;
           const panY = Number(crop?.panY) || 0;
 
-          // Base quadrada inscrita no lado menor da imagem (cover 1x1)
           const minSide = Math.min(srcW, srcH);
           const cropSide = minSide / zoom;
 
-          // Deslocamento máximo permitido sem sair dos limites da foto
           const maxOffsetX = Math.max(0, (srcW - cropSide) / 2);
           const maxOffsetY = Math.max(0, (srcH - cropSide) / 2);
 
@@ -2086,18 +2353,64 @@
     const GeoService = {
       lastRequestTime: 0,
       cache: new Map(),
+      searchCache: new Map(),
+      activeSearchController: null,
+
+      formatStructuredAddress(addressObj, displayName = '') {
+        if (addressObj && typeof addressObj === 'object') {
+          const road = addressObj.road || addressObj.pedestrian || addressObj.footway || '';
+          const houseNumber = addressObj.house_number || '';
+          const street = [road, houseNumber].filter(Boolean).join(', ');
+          const suburb = addressObj.suburb || addressObj.neighbourhood || addressObj.quarter || '';
+          const city = addressObj.city || addressObj.town || addressObj.village || addressObj.municipality || '';
+          const state = addressObj.state || '';
+          const formatted = [street, suburb, city, state].filter(Boolean).join(', ');
+          if (formatted) return Utils.safeString(formatted, 200);
+        }
+        if (displayName) {
+          return Utils.safeString(displayName.split(',').slice(0, 4).join(','), 200);
+        }
+        return '';
+      },
+
+      mapOsmCategory(osmClass, osmType) {
+        if (['restaurant', 'cafe', 'bakery', 'confectionery', 'fast_food', 'ice_cream', 'bar', 'pub', 'food_court'].includes(osmType) || osmClass === 'amenity') {
+          if (['restaurant', 'cafe', 'bakery', 'confectionery', 'fast_food', 'ice_cream', 'bar', 'pub'].includes(osmType)) {
+            return 'food';
+          }
+        }
+        if (osmClass === 'shop' || osmType === 'mall' || osmType === 'supermarket') {
+          return 'shop';
+        }
+        if (osmClass === 'leisure' || osmClass === 'natural' || osmClass === 'tourism') {
+          return 'nature';
+        }
+        return 'place';
+      },
+
+      rateLimitQueue: Promise.resolve(),
+
+      async waitRateLimit() {
+        // Serializa o início das chamadas: evita que buscas e geocodificação
+        // reversa concorrentes ultrapassem o limite público do Nominatim.
+        const previous = this.rateLimitQueue;
+        let release;
+        this.rateLimitQueue = new Promise((resolve) => { release = resolve; });
+        await previous;
+        try {
+          const delay = Math.max(0, 1000 - (Date.now() - this.lastRequestTime));
+          if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
+          this.lastRequestTime = Date.now();
+        } finally {
+          release();
+        }
+      },
 
       async reverseGeocode(lat, lng) {
         const key = `${lat.toFixed(4)},${lng.toFixed(4)}`;
         if (this.cache.has(key)) return this.cache.get(key);
 
-        const now = Date.now();
-        const elapsed = now - this.lastRequestTime;
-        if (elapsed < 1000) {
-          await new Promise((r) => setTimeout(r, 1000 - elapsed));
-        }
-
-        this.lastRequestTime = Date.now();
+        await this.waitRateLimit();
 
         const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&accept-language=pt-BR`;
 
@@ -2109,24 +2422,347 @@
           if (!response.ok) return '';
 
           const data = await response.json();
-          let addr = '';
-          if (data && data.address) {
-            const a = data.address;
-            const road = a.road || a.pedestrian || a.suburb || '';
-            const city = a.city || a.town || a.village || a.municipality || '';
-            const state = a.state || '';
-            addr = [road, city, state].filter(Boolean).join(', ');
-          }
-          if (!addr && data && data.display_name) {
-            addr = data.display_name.split(',').slice(0, 3).join(',');
-          }
-
-          const sanitized = Utils.safeString(addr, 200);
+          const sanitized = this.formatStructuredAddress(data?.address, data?.display_name || '');
           this.cache.set(key, sanitized);
           return sanitized;
         } catch {
           return '';
         }
+      },
+
+      cancelPlaceSearch() {
+        if (this.activeSearchController) {
+          this.activeSearchController.abort();
+          this.activeSearchController = null;
+        }
+      },
+
+      // Busca no Brasil e usa a posição/zoom do mapa para ordenar resultados locais.
+      async searchPlaces(queryText, map = null) {
+        const cleanQuery = Utils.safeString(queryText, 80).trim();
+        if (cleanQuery.length < 2) return [];
+
+        const zoom = map?.getZoom?.() ?? 5;
+        const center = map?.getCenter?.() ?? null;
+        // Em zoom muito aberto, o centro do mapa não representa uma localização útil.
+        const hasLocalContext = Boolean(center && zoom >= 8);
+        const bounds = hasLocalContext ? map.getBounds() : null;
+        const boundsKey = bounds
+          ? `${bounds.getWest().toFixed(3)},${bounds.getSouth().toFixed(3)},${bounds.getEast().toFixed(3)},${bounds.getNorth().toFixed(3)}`
+          : 'brasil';
+        const cacheKey = `${cleanQuery.toLocaleLowerCase('pt-BR')}|${boundsKey}`;
+
+        if (this.searchCache.has(cacheKey)) return this.searchCache.get(cacheKey);
+
+        if (this.activeSearchController) this.activeSearchController.abort();
+        const controller = new AbortController();
+        this.activeSearchController = controller;
+
+        await this.waitRateLimit();
+        if (controller.signal.aborted) return [];
+
+        const url = new URL('https://nominatim.openstreetmap.org/search');
+        url.searchParams.set('format', 'jsonv2');
+        url.searchParams.set('q', cleanQuery);
+        url.searchParams.set('countrycodes', 'br');
+        url.searchParams.set('addressdetails', '1');
+        url.searchParams.set('namedetails', '1');
+        url.searchParams.set('dedupe', '1');
+        url.searchParams.set('limit', '30');
+        url.searchParams.set('accept-language', 'pt-BR');
+
+        // viewbox funciona como preferência geográfica; não restringimos a busca
+        // para que estabelecimentos próximos, mas fora da tela, não desapareçam.
+        if (bounds) {
+          url.searchParams.set('viewbox', `${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()},${bounds.getSouth()}`);
+        }
+
+        const distanceBetween = (lat1, lng1, lat2, lng2) => {
+          const toRad = (value) => value * Math.PI / 180;
+          const dLat = toRad(lat2 - lat1);
+          const dLng = toRad(lng2 - lng1);
+          const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+          return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        };
+
+        try {
+          const response = await fetch(url.toString(), {
+            headers: { 'Accept': 'application/json' },
+            signal: controller.signal
+          });
+
+          if (response.status === 429) {
+            const error = new Error('O serviço de busca está temporariamente limitando consultas. Aguarde alguns segundos.');
+            error.code = 'RATE_LIMIT';
+            throw error;
+          }
+          if (!response.ok) {
+            const error = new Error(`Falha na busca de lugares (HTTP ${response.status}).`);
+            error.code = 'HTTP_ERROR';
+            throw error;
+          }
+
+          const items = await response.json();
+          if (!Array.isArray(items)) return [];
+
+          const parsed = items.map((item) => {
+            const lat = Number.parseFloat(item.lat);
+            const lng = Number.parseFloat(item.lon);
+            if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+
+            const primaryName = Utils.safeString(
+              item.name || item.namedetails?.name || item.address?.amenity || item.address?.shop || item.display_name?.split(',')[0] || '',
+              80
+            );
+            if (!primaryName) return null;
+
+            const address = this.formatStructuredAddress(item.address, item.display_name || '');
+            const distanceKm = hasLocalContext ? distanceBetween(center.lat, center.lng, lat, lng) : null;
+            return {
+              name: primaryName,
+              address,
+              lat,
+              lng,
+              category: this.mapOsmCategory(item.class, item.type),
+              distanceKm,
+              importance: Number(item.importance) || 0
+            };
+          }).filter(Boolean);
+
+          // A proximidade ganha peso quando o usuário aproximou o mapa de uma região.
+          // Fora desse contexto, preservamos a relevância retornada pelo Nominatim.
+          parsed.sort((a, b) => {
+            if (hasLocalContext) {
+              const distanceDelta = a.distanceKm - b.distanceKm;
+              if (Math.abs(distanceDelta) > 0.35) return distanceDelta;
+            }
+            return b.importance - a.importance;
+          });
+
+          const unique = [];
+          const seen = new Set();
+          for (const place of parsed) {
+            const key = `${place.name.toLocaleLowerCase('pt-BR')}|${place.lat.toFixed(4)}|${place.lng.toFixed(4)}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            unique.push(place);
+            if (unique.length === 15) break;
+          }
+
+          this.searchCache.set(cacheKey, unique);
+          // Evita crescimento indefinido do cache durante a sessão.
+          if (this.searchCache.size > 80) this.searchCache.delete(this.searchCache.keys().next().value);
+          return unique;
+        } catch (err) {
+          if (err?.name === 'AbortError') return [];
+          throw err;
+        } finally {
+          if (this.activeSearchController === controller) this.activeSearchController = null;
+        }
+      }
+    };
+
+
+    // Busca de estabelecimentos via Nominatim (OpenStreetMap).
+    // Google Places exige chave/API habilitada; este MVP mantém a restrição
+    // de não depender de credenciais nem de serviços pagos.
+    const PlaceSearchController = {
+      timer: null,
+      requestId: 0,
+      activeIndex: -1,
+      results: [],
+
+      elements() {
+        return {
+          input: document.getElementById('form-name'),
+          list: document.getElementById('place-suggestions-list'),
+          spinner: document.getElementById('place-search-spinner'),
+          pill: document.getElementById('place-linked-pill'),
+          pillLabel: document.getElementById('place-linked-label'),
+          category: document.getElementById('form-place-category'),
+          address: document.getElementById('form-address')
+        };
+      },
+
+      close() {
+        const { input, list, spinner } = this.elements();
+        clearTimeout(this.timer);
+        list.textContent = '';
+        list.classList.remove('active');
+        input.setAttribute('aria-expanded', 'false');
+        input.removeAttribute('aria-activedescendant');
+        spinner.classList.remove('active');
+        this.activeIndex = -1;
+        this.results = [];
+        GeoService.cancelPlaceSearch();
+      },
+
+      showMessage(message) {
+        const { input, list } = this.elements();
+        list.textContent = '';
+        const row = document.createElement('div');
+        row.className = 'place-suggestion-item';
+        row.setAttribute('role', 'option');
+        row.setAttribute('aria-disabled', 'true');
+        row.textContent = message;
+        list.appendChild(row);
+        list.classList.add('active');
+        input.setAttribute('aria-expanded', 'true');
+      },
+
+      async search() {
+        const { input, list, spinner } = this.elements();
+        const query = Utils.safeString(input.value, 80);
+        const requestId = ++this.requestId;
+        if (query.length < 3) {
+          this.close();
+          return;
+        }
+
+        spinner.classList.add('active');
+        list.textContent = '';
+        list.classList.remove('active');
+        input.setAttribute('aria-expanded', 'false');
+
+        try {
+          const bounds = MapController.map?.getBounds() || null;
+          const results = await GeoService.searchPlaces(query, MapController.map);
+          if (requestId !== this.requestId || query !== Utils.safeString(input.value, 80)) return;
+
+          this.results = results;
+          this.activeIndex = -1;
+          spinner.classList.remove('active');
+          if (!results.length) {
+            this.showMessage('Nenhum estabelecimento encontrado. Você pode manter o nome digitado.');
+            return;
+          }
+          this.renderResults();
+        } catch (error) {
+          if (requestId !== this.requestId) return;
+          spinner.classList.remove('active');
+          this.showMessage(error?.code === 'RATE_LIMIT'
+            ? 'Muitas consultas em sequência. Aguarde um instante.'
+            : 'Não foi possível buscar lugares. Verifique sua conexão ou continue com o nome digitado.');
+          console.warn('Busca de estabelecimentos indisponível:', error);
+        }
+      },
+
+      renderResults() {
+        const { input, list } = this.elements();
+        list.textContent = '';
+        this.results.forEach((place, index) => {
+          const option = document.createElement('button');
+          option.type = 'button';
+          option.className = 'place-suggestion-item';
+          option.id = `place-option-${index}`;
+          option.setAttribute('role', 'option');
+          option.setAttribute('aria-selected', 'false');
+
+          const icon = document.createElement('span');
+          icon.className = 'place-suggestion-icon';
+          icon.setAttribute('aria-hidden', 'true');
+          icon.textContent = place.category === 'food' ? '⌂' : place.category === 'shop' ? '▣' : '⌖';
+
+          const textWrap = document.createElement('span');
+          textWrap.className = 'place-suggestion-text';
+          const name = document.createElement('span');
+          name.className = 'place-suggestion-name';
+          name.textContent = place.name;
+          const address = document.createElement('span');
+          address.className = 'place-suggestion-addr';
+          let distanceText = '';
+          if (Number.isFinite(place.distanceKm)) {
+            const distanceLabel = place.distanceKm < 1
+              ? `${Math.round(place.distanceKm * 1000)} m`
+              : `${place.distanceKm.toFixed(1).replace('.', ',')} km`;
+            distanceText = ` · ${distanceLabel} do centro do mapa`;
+          }
+          address.textContent = `${place.address || 'Endereço não informado'}${distanceText}`;
+          textWrap.append(name, address);
+          option.append(icon, textWrap);
+          option.addEventListener('pointerdown', (event) => event.preventDefault());
+          option.addEventListener('click', () => this.select(index));
+          list.appendChild(option);
+        });
+        list.classList.add('active');
+        input.setAttribute('aria-expanded', 'true');
+      },
+
+      moveSelection(direction) {
+        if (!this.results.length) return;
+        this.activeIndex = (this.activeIndex + direction + this.results.length) % this.results.length;
+        const { input, list } = this.elements();
+        [...list.querySelectorAll('[role="option"]')].forEach((option, index) => {
+          const selected = index === this.activeIndex;
+          option.setAttribute('aria-selected', String(selected));
+          if (selected) {
+            input.setAttribute('aria-activedescendant', option.id);
+            option.scrollIntoView({ block: 'nearest' });
+          }
+        });
+      },
+
+      select(index) {
+        const place = this.results[index];
+        if (!place) return;
+        const { input, pill, pillLabel, category, address } = this.elements();
+
+        input.value = place.name;
+        address.value = place.address || '';
+        category.value = place.category || 'place';
+        pillLabel.textContent = `Local vinculado: ${place.name}`;
+        pill.classList.add('active');
+        MapController.setPinCoordinates(place.lat, place.lng, false, true);
+        document.getElementById('form-coord-feedback').textContent =
+          `Local selecionado · ${place.lat.toFixed(5)}, ${place.lng.toFixed(5)}`;
+        this.close();
+        ViewController.checkFormValidity();
+        UI.showToast('Local encontrado e posicionado no mapa.');
+      },
+
+      clearLink() {
+        const { pill, category } = this.elements();
+        pill.classList.remove('active');
+        category.value = '';
+      },
+
+      bind() {
+        const { input } = this.elements();
+        input.addEventListener('input', () => {
+          this.clearLink();
+          clearTimeout(this.timer);
+          this.requestId++;
+          GeoService.cancelPlaceSearch();
+          const query = Utils.safeString(input.value, 80);
+          if (query.length < 3) {
+            this.close();
+            return;
+          }
+          this.timer = setTimeout(() => this.search(), 550);
+        });
+
+        input.addEventListener('keydown', (event) => {
+          if (event.key === 'ArrowDown' && this.results.length) {
+            event.preventDefault();
+            this.moveSelection(1);
+          } else if (event.key === 'ArrowUp' && this.results.length) {
+            event.preventDefault();
+            this.moveSelection(-1);
+          } else if (event.key === 'Enter' && this.activeIndex >= 0) {
+            event.preventDefault();
+            this.select(this.activeIndex);
+          } else if (event.key === 'Escape') {
+            this.close();
+          }
+        });
+
+        input.addEventListener('blur', () => {
+          setTimeout(() => {
+            if (!document.activeElement?.closest('#place-suggestions-list')) this.close();
+          }, 120);
+        });
+
+        document.getElementById('btn-clear-linked-place').addEventListener('click', () => this.clearLink());
       }
     };
 
@@ -2782,7 +3418,8 @@
         }
       },
 
-      setPinCoordinates(lat, lng, triggerGeocode = false) {
+      setPinCoordinates(lat, lng, triggerGeocode = false, centerCamera = false) {
+        if (triggerGeocode) PlaceSearchController.clearLink();
         AppState.activePinCoords = { lat, lng };
         this.showSelectionPin(lat, lng);
 
@@ -2792,6 +3429,10 @@
         document.getElementById('form-lat').value = String(lat);
         document.getElementById('form-lng').value = String(lng);
         ViewController.checkFormValidity();
+
+        if (centerCamera) {
+          ViewController.focusMapWithFormOffset(lat, lng);
+        }
 
         if (triggerGeocode) {
           coordFeedback.textContent = 'Buscando endereço...';
@@ -2915,7 +3556,7 @@
     }, CONFIG.NOMINATIM_DEBOUNCE_MS);
 
     // -------------------------------------------------------------
-    // 9. CONTROLADOR DE TELAS, MOSAICO DINÂMICO E LIGHTBOX
+    // 9. CONTROLADOR DE TELAS, BUSCA DE LUGARES, MOSAICO E LIGHTBOX
     // -------------------------------------------------------------
     const ViewController = {
       galleryPhotos: [],
@@ -3061,6 +3702,7 @@
         document.getElementById('form-panel-title').textContent = 'Novo Momento';
         document.getElementById('form-moment-id').value = '';
         document.getElementById('form-name').value = '';
+        PlaceSearchController.clearLink();
         document.getElementById('form-date').value = Utils.todayIso();
         document.getElementById('form-address').value = '';
         document.getElementById('form-note').value = '';
@@ -3085,6 +3727,7 @@
         document.getElementById('form-panel-title').textContent = 'Editar Momento';
         document.getElementById('form-moment-id').value = m.id;
         document.getElementById('form-name').value = m.name;
+        PlaceSearchController.clearLink();
         document.getElementById('form-date').value = m.date;
         document.getElementById('form-address').value = m.address || '';
         document.getElementById('form-note').value = m.note || '';
@@ -3638,6 +4281,7 @@
         ['form-name', 'form-date', 'form-address'].forEach((id) => {
           document.getElementById(id).addEventListener('input', () => this.checkFormValidity());
         });
+        PlaceSearchController.bind();
 
         const globalStyleSelect = document.getElementById('global-marker-style');
         globalStyleSelect.value = AppState.markerStyle;
