@@ -66,6 +66,7 @@
       --z-panel: 600;
       --z-toast: 1000;
       --z-modal: 1100;
+      --z-crop: 1200;
     }
 
     [data-theme="dark"] {
@@ -310,7 +311,7 @@
     .moment-marker-card {
       position: relative;
       background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
+      border: 1.5px solid var(--border-subtle);
       border-radius: var(--radius-sm);
       width: 56px;
       height: 56px;
@@ -324,7 +325,7 @@
       transition: transform var(--transition-fast);
     }
     .moment-marker-card:hover {
-      transform: translateY(-3px) scale(1.02);
+      transform: translateY(-3px) scale(1.04);
     }
     .moment-marker-card img {
       width: 100%;
@@ -333,6 +334,7 @@
       object-fit: cover;
       object-position: center center;
       background: var(--bg-subtle);
+      display: block;
     }
     .moment-marker-card .card-thumb-placeholder {
       width: 100%;
@@ -343,15 +345,6 @@
       align-items: center;
       justify-content: center;
       color: var(--accent);
-    }
-    .moment-marker-card .card-label {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-main);
-      padding-right: 6px;
-      max-width: 110px;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
     .moment-marker-card::after {
       content: '';
@@ -717,7 +710,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        max-height: 90dvh;
+        max-height: 92dvh;
         border-radius: var(--radius-lg) var(--radius-lg) 0 0;
         transform: translateY(100%);
       }
@@ -725,7 +718,7 @@
         transform: translateY(0);
       }
       #form-panel {
-        max-height: 58dvh;
+        max-height: 62dvh;
       }
     }
 
@@ -734,7 +727,7 @@
         top: 0;
         right: 0;
         bottom: 0;
-        width: 440px;
+        width: 480px;
         max-height: 100dvh;
         border-left: 1px solid var(--border-subtle);
         transform: translateX(100%);
@@ -751,6 +744,7 @@
       align-items: center;
       justify-content: space-between;
       position: relative;
+      flex-shrink: 0;
     }
     .panel-grabber {
       display: none;
@@ -788,6 +782,7 @@
       display: flex;
       justify-content: flex-end;
       gap: 10px;
+      flex-shrink: 0;
     }
 
     /* Formulário */
@@ -824,35 +819,6 @@
       color: var(--text-subtle);
     }
 
-    /* Seletor de Estilo de Marcador */
-    .style-selector {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-    .style-option {
-      border: 1px solid var(--border-subtle);
-      background: var(--bg-page);
-      border-radius: var(--radius-md);
-      padding: 10px 6px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      transition: border-color var(--transition-fast), background-color var(--transition-fast);
-      user-select: none;
-    }
-    .style-option.selected {
-      border-color: var(--accent);
-      background: var(--accent-light);
-      color: var(--accent);
-    }
-    .style-option-label {
-      font-size: 12px;
-      font-weight: 500;
-    }
-
     /* Seletor & Galeria de Uploads */
     .photo-upload-zone {
       display: flex;
@@ -861,7 +827,7 @@
     }
     .photo-grid-preview {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
       gap: 8px;
     }
     .photo-preview-item {
@@ -876,18 +842,32 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      display: block;
     }
     .photo-preview-item.is-cover {
       border: 2px solid var(--accent);
     }
+    .photo-cover-badge {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: var(--radius-full);
+      pointer-events: none;
+      letter-spacing: 0.02em;
+    }
     .photo-preview-actions {
       position: absolute;
       inset: 0;
-      background: rgba(0,0,0,0.3);
+      background: rgba(0, 0, 0, 0.45);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 5px;
       opacity: 0;
       transition: opacity var(--transition-fast);
     }
@@ -895,61 +875,221 @@
     .photo-preview-item:focus-within .photo-preview-actions {
       opacity: 1;
     }
+    @media (hover: none) {
+      .photo-preview-actions {
+        opacity: 1;
+        background: linear-gradient(to top, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0) 65%);
+        align-items: flex-end;
+        padding-bottom: 5px;
+      }
+    }
     .photo-mini-btn {
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: var(--radius-full);
-      background: rgba(255,255,255,0.9);
-      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.94);
+      color: #231f20;
       border: none;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      transition: transform var(--transition-fast);
+    }
+    .photo-mini-btn:hover {
+      transform: scale(1.1);
     }
 
-    /* Detalhe do Momento */
-    .detail-gallery {
-      position: relative;
+    /* =============================================================
+       EDITOR DE ENQUADRAMENTO 1x1 (CROP MODAL)
+       ============================================================= */
+    .crop-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 13, 14, 0.86);
+      backdrop-filter: blur(8px);
+      z-index: var(--z-crop);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .crop-modal.active {
+      display: flex;
+    }
+    .crop-dialog {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
       width: 100%;
-      aspect-ratio: 4 / 3;
+      max-width: 420px;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+    }
+    .crop-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .crop-header h3 {
+      font-family: var(--font-serif);
+      font-size: 19px;
+      font-weight: 500;
+    }
+    .crop-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .crop-stage-wrapper {
+      padding: 20px;
+      background: var(--bg-page);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .crop-viewport {
+      position: relative;
+      width: min(296px, 72vw);
+      height: min(296px, 72vw);
       border-radius: var(--radius-md);
       overflow: hidden;
-      background: var(--bg-subtle);
+      background: #141213;
+      box-shadow: 0 0 0 2px var(--accent), var(--shadow-md);
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
     }
-    .detail-gallery img {
+    .crop-viewport:active {
+      cursor: grabbing;
+    }
+    .crop-viewport img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      max-width: none;
+      max-height: none;
+      pointer-events: none;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+    /* Grade regra dos terços sutil para precisão editorial */
+    .crop-grid-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,0.22) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.22) 1px, transparent 1px);
+      background-size: 33.333% 33.333%;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3);
+    }
+    .crop-controls {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 4px;
+    }
+    .crop-controls svg {
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .crop-zoom-slider {
+      flex: 1;
+      accent-color: var(--accent);
+      height: 6px;
+      cursor: pointer;
+    }
+    .crop-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .crop-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* =============================================================
+       GALERIA EDITORIAL DINÂMICA (DETALHES DO MOMENTO)
+       ============================================================= */
+    .detail-gallery-mosaic {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+    }
+    .mosaic-row {
+      display: grid;
+      gap: 6px;
+      width: 100%;
+    }
+    .mosaic-row.cols-1 { grid-template-columns: 1fr; }
+    .mosaic-row.cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .mosaic-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .mosaic-row.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+    .mosaic-tile {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      cursor: zoom-in;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    /* Quando há apenas 1 foto, dá destaque editorial maior mantendo proporção quadrada */
+    .mosaic-row.cols-1 .mosaic-tile {
+      border-radius: var(--radius-md);
+    }
+    .mosaic-tile:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+    .mosaic-tile:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .mosaic-tile img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      cursor: zoom-in;
+      object-position: center center;
+      display: block;
+      transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .gallery-nav-btn {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius-full);
-      background: rgba(255,255,255,0.85);
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: var(--shadow-sm);
-      color: #231f20;
+    .mosaic-tile:hover img {
+      transform: scale(1.03);
     }
-    .gallery-nav-btn.prev { left: 10px; }
-    .gallery-nav-btn.next { right: 10px; }
-    .gallery-counter {
+    .mosaic-tile-badge {
       position: absolute;
-      bottom: 8px;
-      right: 8px;
-      background: rgba(0,0,0,0.6);
+      bottom: 6px;
+      right: 6px;
+      background: rgba(20, 18, 19, 0.58);
+      backdrop-filter: blur(4px);
       color: #ffffff;
-      font-size: 11px;
-      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 6px;
       border-radius: var(--radius-full);
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+      pointer-events: none;
+    }
+    .mosaic-tile:hover .mosaic-tile-badge {
+      opacity: 1;
     }
 
     .detail-meta {
@@ -988,34 +1128,105 @@
       padding-top: 14px;
     }
 
-    /* Modal Lightbox */
+    /* =============================================================
+       MODAL LIGHTBOX (FOTO INTEIRA ORIGINAL + SETAS DE NAVEGAÇÃO)
+       ============================================================= */
     .lightbox-modal {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.92);
+      background: rgba(12, 10, 11, 0.94);
+      backdrop-filter: blur(6px);
       z-index: var(--z-modal);
       display: none;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 20px 64px;
+      user-select: none;
     }
     .lightbox-modal.active {
       display: flex;
     }
+    .lightbox-stage {
+      position: relative;
+      max-width: 100%;
+      max-height: 88dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     .lightbox-modal img {
       max-width: 100%;
-      max-height: 90dvh;
+      max-height: 86dvh;
       object-fit: contain;
       border-radius: var(--radius-sm);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
     }
     .lightbox-close {
       position: absolute;
-      top: max(20px, env(safe-area-inset-top, 20px));
-      right: max(20px, env(safe-area-inset-right, 20px));
+      top: max(18px, env(safe-area-inset-top, 18px));
+      right: max(18px, env(safe-area-inset-right, 18px));
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-full);
       color: #ffffff;
-      background: transparent;
-      border: none;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
+      transition: background-color var(--transition-fast);
+      z-index: 2;
+    }
+    .lightbox-close:hover {
+      background: rgba(255, 255, 255, 0.24);
+    }
+    .lightbox-nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 46px;
+      height: 46px;
+      border-radius: var(--radius-full);
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color var(--transition-fast), transform var(--transition-fast);
+      z-index: 2;
+    }
+    .lightbox-nav-btn:hover {
+      background: rgba(255, 255, 255, 0.28);
+      transform: translateY(-50%) scale(1.06);
+    }
+    .lightbox-nav-btn.prev { left: max(16px, env(safe-area-inset-left, 16px)); }
+    .lightbox-nav-btn.next { right: max(16px, env(safe-area-inset-right, 16px)); }
+    .lightbox-counter {
+      position: absolute;
+      bottom: max(20px, env(safe-area-inset-bottom, 20px));
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 5px 14px;
+      border-radius: var(--radius-full);
+      letter-spacing: 0.02em;
+    }
+    @media (max-width: 600px) {
+      .lightbox-modal {
+        padding: 16px 12px;
+      }
+      .lightbox-nav-btn {
+        width: 40px;
+        height: 40px;
+        background: rgba(20, 18, 19, 0.65);
+      }
     }
 
     /* Diálogo de Confirmação */
@@ -1217,7 +1428,7 @@
             <span>Adicionar Fotos</span>
           </button>
           <input type="file" id="form-photo-input" class="sr-only" accept="image/*" multiple>
-          <span class="field-hint">A primeira foto é a capa. Toque em uma foto para defini-la como capa.</span>
+          <span class="field-hint">Toque no ícone de recorte em cada foto para ajustar o enquadramento 1×1 do preview. A foto inteira continua salva.</span>
         </div>
 
         <!-- Nome -->
@@ -1265,16 +1476,8 @@
       </div>
 
       <div class="panel-body">
-        <div id="detail-gallery-container" class="detail-gallery" style="display: none;">
-          <img id="detail-gallery-img" src="" alt="Foto do momento">
-          <button id="btn-gallery-prev" class="gallery-nav-btn prev" aria-label="Foto anterior" type="button">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
-          </button>
-          <button id="btn-gallery-next" class="gallery-nav-btn next" aria-label="Próxima foto" type="button">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
-          <div id="detail-gallery-counter" class="gallery-counter"></div>
-        </div>
+        <!-- Mosaico Editorial Dinâmico de Previews 1x1 -->
+        <div id="detail-gallery-mosaic" class="detail-gallery-mosaic" style="display: none;"></div>
 
         <div class="detail-meta">
           <h2 class="detail-title" id="detail-title"></h2>
@@ -1343,12 +1546,64 @@
       </div>
     </aside>
 
-    <!-- Modal Lightbox (Zoom de Fotos) -->
-    <div id="lightbox-modal" class="lightbox-modal" role="dialog" aria-label="Visualização em alta resolução">
-      <button id="btn-close-lightbox" class="lightbox-close" aria-label="Fechar foto ampliada">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    <!-- Modal Editor de Enquadramento 1x1 -->
+    <div id="crop-modal" class="crop-modal" role="dialog" aria-modal="true" aria-labelledby="crop-modal-title">
+      <div class="crop-dialog">
+        <div class="crop-header">
+          <div>
+            <h3 id="crop-modal-title">Enquadrar Preview (1×1)</h3>
+            <p class="crop-subtitle">A foto inteira continua salva para visualização ampliada.</p>
+          </div>
+          <button id="btn-close-crop" class="btn-icon" aria-label="Fechar editor de enquadramento" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="crop-stage-wrapper">
+          <div id="crop-viewport" class="crop-viewport">
+            <img id="crop-stage-img" src="" alt="Ajustar enquadramento">
+            <div class="crop-grid-overlay" aria-hidden="true"></div>
+          </div>
+
+          <div class="crop-controls">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            <input type="range" id="crop-zoom-slider" class="crop-zoom-slider" min="1" max="3" step="0.01" value="1" aria-label="Zoom do enquadramento">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </div>
+          <span class="crop-hint">Arraste a imagem para posicionar e use o controle para aproximar.</span>
+        </div>
+
+        <div class="crop-footer">
+          <button id="btn-reset-crop" type="button" class="btn-secondary">Centralizar</button>
+          <div style="display:flex; gap:8px;">
+            <button id="btn-cancel-crop" type="button" class="btn-secondary">Cancelar</button>
+            <button id="btn-apply-crop" type="button" class="btn-primary">Aplicar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Lightbox (Foto Original Completa + Navegação por Setas) -->
+    <div id="lightbox-modal" class="lightbox-modal" role="dialog" aria-modal="true" aria-label="Visualização em alta resolução">
+      <button id="btn-close-lightbox" class="lightbox-close" aria-label="Fechar foto ampliada" type="button">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
-      <img id="lightbox-img" src="" alt="Foto expandida">
+
+      <button id="btn-lightbox-prev" class="lightbox-nav-btn prev" aria-label="Foto anterior" type="button">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+
+      <div class="lightbox-stage">
+        <img id="lightbox-img" src="" alt="Foto original expandida">
+      </div>
+
+      <button id="btn-lightbox-next" class="lightbox-nav-btn next" aria-label="Próxima foto" type="button">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+
+      <div id="lightbox-counter" class="lightbox-counter"></div>
     </div>
 
     <!-- Modal de Confirmação Genérico -->
@@ -1380,9 +1635,12 @@
       DB_VERSION: 1,
       MAX_PHOTOS_PER_MOMENT: 12,
       MAX_IMAGE_RAW_SIZE_MB: 15,
-      IMAGE_MAX_DIMENSION: 1600,
-      THUMB_MAX_DIMENSION: 320,
-      IMAGE_JPEG_QUALITY: 0.82,
+      IMAGE_MAX_DIMENSION: 1920,        // Alta resolução para visualização completa no Lightbox
+      PREVIEW_SQUARE_DIMENSION: 800,    // Alta nitidez para previews 1x1 nos detalhes do momento
+      MAP_CARD_THUMB_DIMENSION: 160,    // Leve e rápido exclusivamente para os cards do mapa
+      IMAGE_JPEG_QUALITY: 0.88,
+      PREVIEW_JPEG_QUALITY: 0.86,
+      MAP_THUMB_JPEG_QUALITY: 0.78,
       NOMINATIM_DEBOUNCE_MS: 800,
       DEFAULT_COORDS: [-14.235, -51.925],
       DEFAULT_ZOOM: 5,
@@ -1396,7 +1654,6 @@
       GEO_COARSE_ZOOM: 14,
       GEO_MAX_CIRCLE_M: 3000,
 
-      // Camadas 100% livres de autenticação e limpas de excesso de poluição
       MAP_STYLE_DEFAULT: 'standard',
       MAP_STYLES: {
         standard: {
@@ -1477,6 +1734,10 @@
         return str.replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '').trim().slice(0, maxLength);
       },
 
+      clamp(val, min, max) {
+        return Math.min(Math.max(val, min), max);
+      },
+
       debounce(fn, delay) {
         let timer = null;
         return function(...args) {
@@ -1539,7 +1800,7 @@
         });
       },
 
-      async saveMomentWithPhotos(moment, newPhotoRecords = [], photoIdsToDelete = []) {
+      async saveMomentWithPhotos(moment, photoRecordsToSave = [], photoIdsToDelete = []) {
         const db = await this.init();
         return new Promise((resolve, reject) => {
           const tx = db.transaction(['moments', 'photos'], 'readwrite');
@@ -1551,7 +1812,7 @@
 
           mStore.put(moment);
 
-          for (const photo of newPhotoRecords) {
+          for (const photo of photoRecordsToSave) {
             pStore.put(photo);
           }
 
@@ -1627,10 +1888,22 @@
     };
 
     // -------------------------------------------------------------
-    // 4. SERVIÇOS: IMAGEM, GEOCODIFICAÇÃO E BACKUP
+    // 4. SERVIÇOS: IMAGEM (ALTA QUALIDADE + CROP 1x1), GEO E BACKUP
     // -------------------------------------------------------------
     const ImageService = {
-      async compressFile(file) {
+      // Estado padrão de crop normalizado: zoom >= 1, panX/panY em [-0.5, 0.5] relativos à janela
+      defaultCrop() {
+        return { zoom: 1, panX: 0, panY: 0 };
+      },
+
+      async decodeSource(source) {
+        if ('createImageBitmap' in window) {
+          return await createImageBitmap(source, { imageOrientation: 'from-image' });
+        }
+        return await this.bitmapFromImgElement(source);
+      },
+
+      async processNewFile(file) {
         if (!file.type.startsWith('image/')) {
           throw new Error('Formato de arquivo não suportado.');
         }
@@ -1641,23 +1914,75 @@
 
         let bitmap;
         try {
-          if ('createImageBitmap' in window) {
-            bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
-          } else {
-            bitmap = await this.bitmapFromImgElement(file);
-          }
+          bitmap = await this.decodeSource(file);
         } catch {
           throw new Error('Não foi possível decodificar esta imagem.');
         }
 
+        const crop = this.defaultCrop();
         const fullBlob = await this.resizeBitmap(bitmap, CONFIG.IMAGE_MAX_DIMENSION, CONFIG.IMAGE_JPEG_QUALITY);
-        const thumbBlob = await this.resizeBitmap(bitmap, CONFIG.THUMB_MAX_DIMENSION, 0.75);
+        const previewBlob = await this.renderSquareCrop(bitmap, crop, CONFIG.PREVIEW_SQUARE_DIMENSION, CONFIG.PREVIEW_JPEG_QUALITY);
+        const thumbBlob = await this.renderSquareCrop(bitmap, crop, CONFIG.MAP_CARD_THUMB_DIMENSION, CONFIG.MAP_THUMB_JPEG_QUALITY);
 
         const width = bitmap.width;
         const height = bitmap.height;
         bitmap.close?.();
 
-        return { fullBlob, thumbBlob, width, height };
+        return { fullBlob, previewBlob, thumbBlob, crop, width, height };
+      },
+
+      async regenerateCroppedDerivatives(fullBlob, crop) {
+        const bitmap = await this.decodeSource(fullBlob);
+        const previewBlob = await this.renderSquareCrop(bitmap, crop, CONFIG.PREVIEW_SQUARE_DIMENSION, CONFIG.PREVIEW_JPEG_QUALITY);
+        const thumbBlob = await this.renderSquareCrop(bitmap, crop, CONFIG.MAP_CARD_THUMB_DIMENSION, CONFIG.MAP_THUMB_JPEG_QUALITY);
+        bitmap.close?.();
+        return { previewBlob, thumbBlob };
+      },
+
+      // Renderiza exatamente a janela quadrada 1x1 escolhida pelo usuário a partir da foto original
+      renderSquareCrop(bitmap, crop, outputSize, quality) {
+        return new Promise((resolve, reject) => {
+          const srcW = bitmap.width;
+          const srcH = bitmap.height;
+          const zoom = Math.max(1, Number(crop?.zoom) || 1);
+          const panX = Number(crop?.panX) || 0;
+          const panY = Number(crop?.panY) || 0;
+
+          // Base quadrada inscrita no lado menor da imagem (cover 1x1)
+          const minSide = Math.min(srcW, srcH);
+          const cropSide = minSide / zoom;
+
+          // Deslocamento máximo permitido sem sair dos limites da foto
+          const maxOffsetX = Math.max(0, (srcW - cropSide) / 2);
+          const maxOffsetY = Math.max(0, (srcH - cropSide) / 2);
+
+          const centerX = srcW / 2 - panX * (srcW - cropSide);
+          const centerY = srcH / 2 - panY * (srcH - cropSide);
+
+          const clampedCenterX = Utils.clamp(centerX, srcW / 2 - maxOffsetX, srcW / 2 + maxOffsetX);
+          const clampedCenterY = Utils.clamp(centerY, srcH / 2 - maxOffsetY, srcH / 2 + maxOffsetY);
+
+          const sx = Math.max(0, clampedCenterX - cropSide / 2);
+          const sy = Math.max(0, clampedCenterY - cropSide / 2);
+
+          const canvas = document.createElement('canvas');
+          canvas.width = outputSize;
+          canvas.height = outputSize;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas indisponível.'));
+            return;
+          }
+
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(bitmap, sx, sy, cropSide, cropSide, 0, 0, outputSize, outputSize);
+
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error('Falha ao gerar recorte 1×1.'));
+          }, 'image/jpeg', quality);
+        });
       },
 
       resizeBitmap(bitmap, maxDimension, quality) {
@@ -1682,6 +2007,8 @@
             return;
           }
 
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(bitmap, 0, 0, width, height);
           canvas.toBlob((blob) => {
             if (blob) resolve(blob);
@@ -1690,10 +2017,10 @@
         });
       },
 
-      bitmapFromImgElement(file) {
+      bitmapFromImgElement(blobOrFile) {
         return new Promise((resolve, reject) => {
           const img = new Image();
-          const url = URL.createObjectURL(file);
+          const url = URL.createObjectURL(blobOrFile);
           img.onload = () => {
             URL.revokeObjectURL(url);
             resolve(img);
@@ -1782,11 +2109,14 @@
         for (const p of photos) {
           const fullB64 = await ImageService.blobToBase64(p.fullBlob);
           const thumbB64 = await ImageService.blobToBase64(p.thumbBlob);
+          const previewB64 = p.previewBlob ? await ImageService.blobToBase64(p.previewBlob) : thumbB64;
           photosBase64.push({
             id: p.id,
             momentId: p.momentId,
             fullB64,
+            previewB64,
             thumbB64,
+            crop: p.crop || ImageService.defaultCrop(),
             width: p.width,
             height: p.height,
             createdAt: p.createdAt
@@ -1794,7 +2124,7 @@
         }
 
         const payload = {
-          version: 1,
+          version: 2,
           app: 'mapa-de-momentos',
           exportedAt: new Date().toISOString(),
           moments,
@@ -1861,11 +2191,14 @@
           for (const p of data.photos) {
             const fullBlob = ImageService.base64ToBlob(p.fullB64);
             const thumbBlob = ImageService.base64ToBlob(p.thumbB64);
+            const previewBlob = p.previewB64 ? ImageService.base64ToBlob(p.previewB64) : thumbBlob;
             pStore.put({
               id: p.id,
               momentId: p.momentId,
               fullBlob,
+              previewBlob,
               thumbBlob,
+              crop: p.crop || ImageService.defaultCrop(),
               width: p.width,
               height: p.height,
               createdAt: p.createdAt || Date.now()
@@ -1890,13 +2223,25 @@
       draftPhotos: [],
       cachedPhotoUrls: new Map(),
 
-      createThumbUrl(photoId, blob) {
-        if (this.cachedPhotoUrls.has(photoId)) {
-          return this.cachedPhotoUrls.get(photoId);
+      getObjectUrl(cacheKey, blob) {
+        if (!blob) return '';
+        if (this.cachedPhotoUrls.has(cacheKey)) {
+          return this.cachedPhotoUrls.get(cacheKey);
         }
         const url = URL.createObjectURL(blob);
-        this.cachedPhotoUrls.set(photoId, url);
+        this.cachedPhotoUrls.set(cacheKey, url);
         return url;
+      },
+
+      invalidatePhotoUrls(photoId) {
+        for (const suffix of ['', '_preview', '_full']) {
+          const key = `${photoId}${suffix}`;
+          const existing = this.cachedPhotoUrls.get(key);
+          if (existing) {
+            URL.revokeObjectURL(existing);
+            this.cachedPhotoUrls.delete(key);
+          }
+        }
       },
 
       revokeAllUrls() {
@@ -1908,7 +2253,205 @@
     };
 
     // -------------------------------------------------------------
-    // 6. UI: TOASTS & MODAIS DE CONFIRMAÇÃO
+    // 6. EDITOR INTERATIVO DE ENQUADRAMENTO 1x1 (CROP CONTROLLER)
+    // -------------------------------------------------------------
+    const CropController = {
+      isOpen: false,
+      draftIndex: -1,
+      sourceUrl: null,
+      naturalW: 0,
+      naturalH: 0,
+      viewportSize: 296,
+      zoom: 1,
+      panX: 0,
+      panY: 0,
+      isDragging: false,
+      dragStartX: 0,
+      dragStartY: 0,
+      dragOriginPanX: 0,
+      dragOriginPanY: 0,
+
+      init() {
+        const viewport = document.getElementById('crop-viewport');
+        const slider = document.getElementById('crop-zoom-slider');
+
+        slider.addEventListener('input', () => {
+          this.zoom = parseFloat(slider.value) || 1;
+          this.clampPan();
+          this.applyTransform();
+        });
+
+        viewport.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          this.isDragging = true;
+          this.dragStartX = e.clientX;
+          this.dragStartY = e.clientY;
+          this.dragOriginPanX = this.panX;
+          this.dragOriginPanY = this.panY;
+          viewport.setPointerCapture(e.pointerId);
+        });
+
+        viewport.addEventListener('pointermove', (e) => {
+          if (!this.isDragging) return;
+          const dx = e.clientX - this.dragStartX;
+          const dy = e.clientY - this.dragStartY;
+          const { renderedW, renderedH } = this.getRenderedDimensions();
+          const travelX = renderedW - this.viewportSize;
+          const travelY = renderedH - this.viewportSize;
+
+          this.panX = travelX > 0 ? this.dragOriginPanX + dx / travelX : 0;
+          this.panY = travelY > 0 ? this.dragOriginPanY + dy / travelY : 0;
+          this.clampPan();
+          this.applyTransform();
+        });
+
+        const endDrag = (e) => {
+          if (!this.isDragging) return;
+          this.isDragging = false;
+          try { viewport.releasePointerCapture(e.pointerId); } catch {}
+        };
+        viewport.addEventListener('pointerup', endDrag);
+        viewport.addEventListener('pointercancel', endDrag);
+
+        viewport.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          const delta = e.deltaY < 0 ? 0.08 : -0.08;
+          this.zoom = Utils.clamp(this.zoom + delta, 1, 3);
+          slider.value = String(this.zoom);
+          this.clampPan();
+          this.applyTransform();
+        }, { passive: false });
+
+        document.getElementById('btn-reset-crop').onclick = () => {
+          this.zoom = 1;
+          this.panX = 0;
+          this.panY = 0;
+          slider.value = '1';
+          this.applyTransform();
+        };
+
+        document.getElementById('btn-close-crop').onclick = () => this.close();
+        document.getElementById('btn-cancel-crop').onclick = () => this.close();
+        document.getElementById('btn-apply-crop').onclick = () => this.applyAndSave();
+      },
+
+      open(draftIndex) {
+        const draft = AppState.draftPhotos[draftIndex];
+        if (!draft || !draft.blob) return;
+
+        this.draftIndex = draftIndex;
+        const crop = draft.crop || ImageService.defaultCrop();
+        this.zoom = crop.zoom || 1;
+        this.panX = crop.panX || 0;
+        this.panY = crop.panY || 0;
+
+        if (this.sourceUrl) {
+          URL.revokeObjectURL(this.sourceUrl);
+        }
+        this.sourceUrl = URL.createObjectURL(draft.blob);
+
+        const modal = document.getElementById('crop-modal');
+        const img = document.getElementById('crop-stage-img');
+        const slider = document.getElementById('crop-zoom-slider');
+        slider.value = String(this.zoom);
+
+        img.onload = () => {
+          this.naturalW = img.naturalWidth;
+          this.naturalH = img.naturalHeight;
+          const viewport = document.getElementById('crop-viewport');
+          this.viewportSize = viewport.clientWidth || 296;
+          this.clampPan();
+          this.applyTransform();
+        };
+
+        img.src = this.sourceUrl;
+        modal.classList.add('active');
+        this.isOpen = true;
+      },
+
+      close() {
+        document.getElementById('crop-modal').classList.remove('active');
+        this.isOpen = false;
+        this.draftIndex = -1;
+        if (this.sourceUrl) {
+          URL.revokeObjectURL(this.sourceUrl);
+          this.sourceUrl = null;
+        }
+      },
+
+      getRenderedDimensions() {
+        const minNat = Math.min(this.naturalW || 1, this.naturalH || 1);
+        const baseScale = this.viewportSize / minNat;
+        const scale = baseScale * this.zoom;
+        return {
+          renderedW: this.naturalW * scale,
+          renderedH: this.naturalH * scale
+        };
+      },
+
+      clampPan() {
+        const { renderedW, renderedH } = this.getRenderedDimensions();
+        const travelX = renderedW - this.viewportSize;
+        const travelY = renderedH - this.viewportSize;
+        this.panX = travelX > 0.5 ? Utils.clamp(this.panX, -0.5, 0.5) : 0;
+        this.panY = travelY > 0.5 ? Utils.clamp(this.panY, -0.5, 0.5) : 0;
+      },
+
+      applyTransform() {
+        const img = document.getElementById('crop-stage-img');
+        if (!this.naturalW || !this.naturalH) return;
+
+        const { renderedW, renderedH } = this.getRenderedDimensions();
+        const travelX = renderedW - this.viewportSize;
+        const travelY = renderedH - this.viewportSize;
+
+        const tx = -travelX / 2 + this.panX * travelX;
+        const ty = -travelY / 2 + this.panY * travelY;
+
+        img.style.width = `${renderedW}px`;
+        img.style.height = `${renderedH}px`;
+        img.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
+      },
+
+      async applyAndSave() {
+        const draft = AppState.draftPhotos[this.draftIndex];
+        if (!draft) return;
+
+        const applyBtn = document.getElementById('btn-apply-crop');
+        applyBtn.disabled = true;
+        applyBtn.textContent = 'Aplicando...';
+
+        try {
+          const newCrop = {
+            zoom: Number(this.zoom.toFixed(4)),
+            panX: Number(this.panX.toFixed(4)),
+            panY: Number(this.panY.toFixed(4))
+          };
+
+          const { previewBlob, thumbBlob } = await ImageService.regenerateCroppedDerivatives(draft.blob, newCrop);
+
+          AppState.invalidatePhotoUrls(draft.id);
+          draft.crop = newCrop;
+          draft.previewBlob = previewBlob;
+          draft.thumbBlob = thumbBlob;
+          draft.previewUrl = AppState.getObjectUrl(`${draft.id}_preview`, previewBlob);
+          draft.isModified = true;
+
+          ViewController.renderPhotoUploadGrid();
+          this.close();
+          UI.showToast('Enquadramento atualizado.');
+        } catch (err) {
+          console.error(err);
+          UI.showToast('Não foi possível aplicar o recorte.');
+        } finally {
+          applyBtn.disabled = false;
+          applyBtn.textContent = 'Aplicar';
+        }
+      }
+    };
+
+    // -------------------------------------------------------------
+    // 7. UI: TOASTS & MODAIS DE CONFIRMAÇÃO
     // -------------------------------------------------------------
     const UI = {
       showToast(message, durationMs = 3200) {
@@ -1957,7 +2500,7 @@
     };
 
     // -------------------------------------------------------------
-    // 7. COMPONENTE MAPA (LEAFLET WRAPPER)
+    // 8. COMPONENTE MAPA (LEAFLET WRAPPER)
     // -------------------------------------------------------------
     const MapController = {
       map: null,
@@ -2282,6 +2825,7 @@
 
         const cardEl = document.createElement('div');
         cardEl.className = 'moment-marker-card';
+        cardEl.title = m.name;
 
         let hasCover = false;
         if (m.coverPhotoId) {
@@ -2289,7 +2833,7 @@
             const photoRecord = await DB.getPhotoById(m.coverPhotoId);
             if (photoRecord && photoRecord.thumbBlob) {
               const img = document.createElement('img');
-              img.src = AppState.createThumbUrl(photoRecord.id, photoRecord.thumbBlob);
+              img.src = AppState.getObjectUrl(photoRecord.id, photoRecord.thumbBlob);
               img.alt = m.name;
               cardEl.appendChild(img);
               hasCover = true;
@@ -2342,11 +2886,15 @@
     }, CONFIG.NOMINATIM_DEBOUNCE_MS);
 
     // -------------------------------------------------------------
-    // 8. CONTROLADOR DE TELAS E FLUXOS DA INTERFACE
+    // 9. CONTROLADOR DE TELAS, MOSAICO DINÂMICO E LIGHTBOX
     // -------------------------------------------------------------
     const ViewController = {
+      galleryPhotos: [],
+      lightboxIndex: 0,
+
       async init() {
         this.bindEvents();
+        CropController.init();
         this.loadMapStylePreference();
         MapController.init();
         this.setupTheme();
@@ -2512,22 +3060,39 @@
         document.getElementById('form-address').value = m.address || '';
         document.getElementById('form-note').value = m.note || '';
 
-
         const existingPhotos = await DB.getPhotosForMoment(m.id);
-        AppState.draftPhotos = existingPhotos.map((p) => ({
-          id: p.id,
-          blob: p.fullBlob,
-          thumbBlob: p.thumbBlob,
-          previewUrl: AppState.createThumbUrl(p.id, p.thumbBlob),
-          isExisting: true,
-          isCover: p.id === m.coverPhotoId
-        }));
+        const orderedPhotos = this.sortPhotosByMomentOrder(existingPhotos, m.photoIds);
+
+        AppState.draftPhotos = orderedPhotos.map((p) => {
+          const previewSource = p.previewBlob || p.thumbBlob;
+          return {
+            id: p.id,
+            blob: p.fullBlob,
+            previewBlob: previewSource,
+            thumbBlob: p.thumbBlob,
+            crop: p.crop || ImageService.defaultCrop(),
+            previewUrl: AppState.getObjectUrl(`${p.id}_preview`, previewSource),
+            isExisting: true,
+            isModified: false,
+            isCover: p.id === m.coverPhotoId
+          };
+        });
 
         this.renderPhotoUploadGrid();
         MapController.setPinCoordinates(m.lat, m.lng, false);
 
         this.showFormPanel();
         this.checkFormValidity();
+      },
+
+      sortPhotosByMomentOrder(photos, photoIds) {
+        if (!Array.isArray(photoIds) || photoIds.length === 0) return photos;
+        const orderMap = new Map(photoIds.map((id, idx) => [id, idx]));
+        return [...photos].sort((a, b) => {
+          const ia = orderMap.has(a.id) ? orderMap.get(a.id) : 999;
+          const ib = orderMap.has(b.id) ? orderMap.get(b.id) : 999;
+          return ia - ib;
+        });
       },
 
       showFormPanel() {
@@ -2540,7 +3105,7 @@
         const isMobile = window.matchMedia('(max-width: 767px)').matches;
         const target = isMobile
           ? { x: size.x / 2, y: size.y * 0.25 }
-          : { x: (size.x - 440) / 2, y: size.y / 2 };
+          : { x: (size.x - 480) / 2, y: size.y / 2 };
         const current = map.latLngToContainerPoint([pin.lat, pin.lng]);
         map.panBy([current.x - target.x, current.y - target.y]);
       },
@@ -2572,68 +3137,145 @@
           noteText.style.display = 'none';
         }
 
-        await this.setupDetailGallery(m);
+        await this.setupDetailMosaic(m);
 
         document.getElementById('panel-backdrop').classList.add('active');
         document.getElementById('detail-panel').classList.add('active');
       },
 
-      galleryPhotos: [],
-      currentGalleryIndex: 0,
+      // Calcula a distribuição exata das linhas do mosaico de acordo com a contagem de fotos:
+      // 1 -> [1]
+      // 2 -> [2]
+      // 3 -> [3]
+      // 4 -> [2, 2]
+      // 5 -> [3, 2]
+      // >= 6: divisível por 3 -> grupos de 3; senão divisível por 4 -> grupos de 4; senão blocos de 3 com resto equilibrado (ex: 7 -> [3, 4] ou [3, 2, 2], 10 -> [3, 3, 4], 11 -> [3, 4, 4])
+      computeMosaicRowCounts(total) {
+        if (total <= 0) return [];
+        if (total === 1) return [1];
+        if (total === 2) return [2];
+        if (total === 3) return [3];
+        if (total === 4) return [2, 2];
+        if (total === 5) return [3, 2];
 
-      async setupDetailGallery(moment) {
-        const container = document.getElementById('detail-gallery-container');
-        const img = document.getElementById('detail-gallery-img');
-        const prevBtn = document.getElementById('btn-gallery-prev');
-        const nextBtn = document.getElementById('btn-gallery-next');
-        const counter = document.getElementById('detail-gallery-counter');
+        // A partir de 6 fotos:
+        if (total % 3 === 0) {
+          return Array(total / 3).fill(3);
+        }
+        if (total % 4 === 0) {
+          return Array(total / 4).fill(4);
+        }
 
-        const photos = await DB.getPhotosForMoment(moment.id);
+        // Casos a partir de 6 não divisíveis nem por 3 nem por 4 (ex: 7, 10, 11):
+        // Agrupa prioritariamente em 3 e equilibra o restante sem deixar linha solitária de 1 foto
+        const remainder = total % 3;
+        if (remainder === 1) {
+          // Ex: 7 -> [3, 4]; 10 -> [3, 3, 4]
+          const threes = Math.floor(total / 3) - 1;
+          return [...Array(threes).fill(3), 4];
+        }
+        // remainder === 2 (ex: 11 -> [3, 4, 4])
+        const threes = Math.floor(total / 3) - 1;
+        return [...Array(threes).fill(3), 4, 4];
+      },
+
+      async setupDetailMosaic(moment) {
+        const container = document.getElementById('detail-gallery-mosaic');
+        container.textContent = '';
+
+        const rawPhotos = await DB.getPhotosForMoment(moment.id);
+        const photos = this.sortPhotosByMomentOrder(rawPhotos, moment.photoIds);
         this.galleryPhotos = photos;
-        this.currentGalleryIndex = 0;
 
         if (photos.length === 0) {
           container.style.display = 'none';
           return;
         }
 
-        container.style.display = 'block';
-        this.updateGalleryView();
+        container.style.display = 'flex';
+        const rowCounts = this.computeMosaicRowCounts(photos.length);
+        let photoCursor = 0;
 
-        prevBtn.onclick = () => {
-          this.currentGalleryIndex = (this.currentGalleryIndex - 1 + this.galleryPhotos.length) % this.galleryPhotos.length;
-          this.updateGalleryView();
-        };
+        rowCounts.forEach((colsCount) => {
+          const row = document.createElement('div');
+          row.className = `mosaic-row cols-${colsCount}`;
 
-        nextBtn.onclick = () => {
-          this.currentGalleryIndex = (this.currentGalleryIndex + 1) % this.galleryPhotos.length;
-          this.updateGalleryView();
-        };
+          for (let c = 0; c < colsCount && photoCursor < photos.length; c++) {
+            const index = photoCursor;
+            const photo = photos[index];
+            photoCursor++;
 
-        img.onclick = () => {
-          const current = this.galleryPhotos[this.currentGalleryIndex];
-          if (current) {
-            const fullUrl = AppState.createThumbUrl(current.id + '_full', current.fullBlob);
-            document.getElementById('lightbox-img').src = fullUrl;
-            document.getElementById('lightbox-modal').classList.add('active');
+            const tile = document.createElement('div');
+            tile.className = 'mosaic-tile';
+            tile.tabIndex = 0;
+            tile.setAttribute('role', 'button');
+            tile.setAttribute('aria-label', `Ampliar foto ${index + 1} de ${photos.length}`);
+
+            const img = document.createElement('img');
+            // Usa o preview 1x1 em alta nitidez (800px), caindo para fullBlob ou thumbBlob apenas se necessário
+            const highResPreviewBlob = photo.previewBlob || photo.fullBlob || photo.thumbBlob;
+            img.src = AppState.getObjectUrl(`${photo.id}_preview`, highResPreviewBlob);
+            img.alt = `${moment.name} — foto ${index + 1}`;
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            tile.appendChild(img);
+
+            if (photos.length > 1) {
+              const badge = document.createElement('span');
+              badge.className = 'mosaic-tile-badge';
+              badge.textContent = `${index + 1}/${photos.length}`;
+              tile.appendChild(badge);
+            }
+
+            const openPhoto = () => this.openLightbox(index);
+            tile.onclick = openPhoto;
+            tile.onkeydown = (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openPhoto();
+              }
+            };
+
+            row.appendChild(tile);
           }
-        };
+
+          container.appendChild(row);
+        });
       },
 
-      updateGalleryView() {
-        const img = document.getElementById('detail-gallery-img');
-        const counter = document.getElementById('detail-gallery-counter');
-        const prevBtn = document.getElementById('btn-gallery-prev');
-        const nextBtn = document.getElementById('btn-gallery-next');
+      openLightbox(index) {
+        if (this.galleryPhotos.length === 0) return;
+        this.lightboxIndex = Utils.clamp(index, 0, this.galleryPhotos.length - 1);
+        this.updateLightboxView();
+        document.getElementById('lightbox-modal').classList.add('active');
+      },
 
-        const current = this.galleryPhotos[this.currentGalleryIndex];
+      updateLightboxView() {
+        const current = this.galleryPhotos[this.lightboxIndex];
         if (!current) return;
 
-        img.src = AppState.createThumbUrl(current.id, current.thumbBlob);
-        counter.textContent = `${this.currentGalleryIndex + 1} de ${this.galleryPhotos.length}`;
+        const img = document.getElementById('lightbox-img');
+        const counter = document.getElementById('lightbox-counter');
+        const prevBtn = document.getElementById('btn-lightbox-prev');
+        const nextBtn = document.getElementById('btn-lightbox-next');
 
-        prevBtn.style.display = this.galleryPhotos.length > 1 ? 'flex' : 'none';
-        nextBtn.style.display = this.galleryPhotos.length > 1 ? 'flex' : 'none';
+        // Exibe a foto inteira original (sem recorte 1x1)
+        const fullUrl = AppState.getObjectUrl(`${current.id}_full`, current.fullBlob);
+        img.src = fullUrl;
+        img.alt = `${AppState.activeMoment?.name || 'Momento'} — foto ${this.lightboxIndex + 1} de ${this.galleryPhotos.length}`;
+
+        const hasMultiple = this.galleryPhotos.length > 1;
+        prevBtn.style.display = hasMultiple ? 'flex' : 'none';
+        nextBtn.style.display = hasMultiple ? 'flex' : 'none';
+        counter.style.display = hasMultiple ? 'block' : 'none';
+        counter.textContent = `${this.lightboxIndex + 1} de ${this.galleryPhotos.length}`;
+      },
+
+      navigateLightbox(delta) {
+        if (this.galleryPhotos.length <= 1) return;
+        const len = this.galleryPhotos.length;
+        this.lightboxIndex = (this.lightboxIndex + delta + len) % len;
+        this.updateLightboxView();
       },
 
       async setGlobalMarkerStyle(style) {
@@ -2658,6 +3300,10 @@
         const grid = document.getElementById('form-photo-grid');
         grid.textContent = '';
 
+        if (AppState.draftPhotos.length > 0 && !AppState.draftPhotos.some((p) => p.isCover)) {
+          AppState.draftPhotos[0].isCover = true;
+        }
+
         AppState.draftPhotos.forEach((photo, index) => {
           const item = document.createElement('div');
           item.className = 'photo-preview-item' + (photo.isCover ? ' is-cover' : '');
@@ -2667,19 +3313,56 @@
           img.alt = `Foto ${index + 1}`;
           item.appendChild(img);
 
+          if (photo.isCover) {
+            const badge = document.createElement('span');
+            badge.className = 'photo-cover-badge';
+            badge.textContent = 'Capa';
+            item.appendChild(badge);
+          }
+
           const actions = document.createElement('div');
           actions.className = 'photo-preview-actions';
 
+          // Botão Enquadrar 1x1
+          const btnCrop = document.createElement('button');
+          btnCrop.type = 'button';
+          btnCrop.className = 'photo-mini-btn';
+          btnCrop.title = 'Enquadrar preview 1×1';
+          btnCrop.setAttribute('aria-label', 'Enquadrar preview 1×1');
+          const cropSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          cropSvg.setAttribute('width', '13');
+          cropSvg.setAttribute('height', '13');
+          cropSvg.setAttribute('viewBox', '0 0 24 24');
+          cropSvg.setAttribute('fill', 'none');
+          cropSvg.setAttribute('stroke', 'currentColor');
+          cropSvg.setAttribute('stroke-width', '2.2');
+          cropSvg.setAttribute('stroke-linecap', 'round');
+          cropSvg.setAttribute('stroke-linejoin', 'round');
+          const cropP1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          cropP1.setAttribute('d', 'M6 2v14a2 2 0 0 0 2 2h14');
+          const cropP2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          cropP2.setAttribute('d', 'M18 22V8a2 2 0 0 0-2-2H2');
+          cropSvg.appendChild(cropP1);
+          cropSvg.appendChild(cropP2);
+          btnCrop.appendChild(cropSvg);
+
+          btnCrop.onclick = (e) => {
+            e.stopPropagation();
+            CropController.open(index);
+          };
+
+          // Botão Definir como Capa
           const btnCover = document.createElement('button');
           btnCover.type = 'button';
           btnCover.className = 'photo-mini-btn';
           btnCover.title = 'Definir como capa';
+          btnCover.setAttribute('aria-label', 'Definir como capa');
           const starSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-          starSvg.setAttribute('width', '14');
-          starSvg.setAttribute('height', '14');
+          starSvg.setAttribute('width', '13');
+          starSvg.setAttribute('height', '13');
           starSvg.setAttribute('viewBox', '0 0 24 24');
           starSvg.setAttribute('fill', photo.isCover ? 'var(--accent)' : 'none');
-          starSvg.setAttribute('stroke', 'currentColor');
+          starSvg.setAttribute('stroke', photo.isCover ? 'var(--accent)' : 'currentColor');
           starSvg.setAttribute('stroke-width', '2');
           const starPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
           starPath.setAttribute('d', 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z');
@@ -2693,17 +3376,19 @@
             this.renderPhotoUploadGrid();
           };
 
+          // Botão Remover Foto
           const btnDel = document.createElement('button');
           btnDel.type = 'button';
           btnDel.className = 'photo-mini-btn';
           btnDel.title = 'Remover foto';
+          btnDel.setAttribute('aria-label', 'Remover foto');
           const trashSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-          trashSvg.setAttribute('width', '14');
-          trashSvg.setAttribute('height', '14');
+          trashSvg.setAttribute('width', '13');
+          trashSvg.setAttribute('height', '13');
           trashSvg.setAttribute('viewBox', '0 0 24 24');
           trashSvg.setAttribute('fill', 'none');
           trashSvg.setAttribute('stroke', 'var(--danger)');
-          trashSvg.setAttribute('stroke-width', '2');
+          trashSvg.setAttribute('stroke-width', '2.2');
           const trashLine1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
           trashLine1.setAttribute('x1', '18'); trashLine1.setAttribute('y1', '6');
           trashLine1.setAttribute('x2', '6'); trashLine1.setAttribute('y2', '18');
@@ -2723,15 +3408,12 @@
             this.renderPhotoUploadGrid();
           };
 
+          actions.appendChild(btnCrop);
           actions.appendChild(btnCover);
           actions.appendChild(btnDel);
           item.appendChild(actions);
           grid.appendChild(item);
         });
-
-        if (AppState.draftPhotos.length > 0 && !AppState.draftPhotos.some((p) => p.isCover)) {
-          AppState.draftPhotos[0].isCover = true;
-        }
       },
 
       renderListView() {
@@ -2807,9 +3489,10 @@
 
           if (m.coverPhotoId) {
             DB.getPhotoById(m.coverPhotoId).then((rec) => {
-              if (rec && rec.thumbBlob) {
+              const sourceBlob = rec?.previewBlob || rec?.thumbBlob;
+              if (sourceBlob) {
                 const img = document.createElement('img');
-                img.src = AppState.createThumbUrl(rec.id, rec.thumbBlob);
+                img.src = AppState.getObjectUrl(`${rec.id}_preview`, sourceBlob);
                 img.alt = m.name;
                 img.loading = 'lazy';
                 img.decoding = 'async';
@@ -2932,18 +3615,26 @@
           }
 
           const selectedFiles = files.slice(0, remainingSlots);
+          let firstNewIndex = -1;
+
           for (const file of selectedFiles) {
             try {
               UI.showToast(`Processando ${file.name}...`);
-              const compressed = await ImageService.compressFile(file);
+              const processed = await ImageService.processNewFile(file);
               const draftId = Utils.uuid();
+              const newIndex = AppState.draftPhotos.length;
+              if (firstNewIndex === -1) firstNewIndex = newIndex;
+
               AppState.draftPhotos.push({
                 id: draftId,
-                blob: compressed.fullBlob,
-                thumbBlob: compressed.thumbBlob,
-                previewUrl: AppState.createThumbUrl(draftId, compressed.thumbBlob),
+                blob: processed.fullBlob,
+                previewBlob: processed.previewBlob,
+                thumbBlob: processed.thumbBlob,
+                crop: processed.crop,
+                previewUrl: AppState.getObjectUrl(`${draftId}_preview`, processed.previewBlob),
                 isExisting: false,
-                isCover: AppState.draftPhotos.length === 0
+                isModified: false,
+                isCover: newIndex === 0
               });
             } catch (err) {
               UI.showToast(err.message || 'Erro ao carregar imagem.');
@@ -2952,6 +3643,11 @@
 
           this.renderPhotoUploadGrid();
           photoInput.value = '';
+
+          // Se adicionou 1 foto nova, abre imediatamente o enquadramento 1x1 para facilitar
+          if (selectedFiles.length === 1 && firstNewIndex !== -1) {
+            CropController.open(firstNewIndex);
+          }
         };
 
         document.getElementById('btn-save-moment').onclick = async () => {
@@ -2973,8 +3669,17 @@
           await this.loadAndRenderMoments();
         };
 
+        // Lightbox Controls + Setas de Navegação
         document.getElementById('btn-close-lightbox').onclick = () => {
           document.getElementById('lightbox-modal').classList.remove('active');
+        };
+        document.getElementById('btn-lightbox-prev').onclick = (e) => {
+          e.stopPropagation();
+          this.navigateLightbox(-1);
+        };
+        document.getElementById('btn-lightbox-next').onclick = (e) => {
+          e.stopPropagation();
+          this.navigateLightbox(1);
         };
         document.getElementById('lightbox-modal').onclick = (e) => {
           if (e.target.id === 'lightbox-modal') {
@@ -3030,13 +3735,28 @@
         };
 
         window.addEventListener('keydown', (e) => {
+          if (CropController.isOpen) {
+            if (e.key === 'Escape') CropController.close();
+            return;
+          }
+
+          const lightboxOpen = document.getElementById('lightbox-modal').classList.contains('active');
+          if (lightboxOpen) {
+            if (e.key === 'Escape') {
+              document.getElementById('lightbox-modal').classList.remove('active');
+            } else if (e.key === 'ArrowLeft') {
+              e.preventDefault();
+              this.navigateLightbox(-1);
+            } else if (e.key === 'ArrowRight') {
+              e.preventDefault();
+              this.navigateLightbox(1);
+            }
+            return;
+          }
+
           if (e.key === 'Escape') {
             if (MapController.closeStyleMenu()) return;
-            if (document.getElementById('lightbox-modal').classList.contains('active')) {
-              document.getElementById('lightbox-modal').classList.remove('active');
-            } else {
-              closeHandler();
-            }
+            closeHandler();
           }
         });
       },
@@ -3059,14 +3779,16 @@
           const coverPhotoId = coverDraft ? coverDraft.id : null;
           const photoIds = AppState.draftPhotos.map((p) => p.id);
 
-          const newPhotoRecords = [];
+          const photoRecordsToSave = [];
           for (const dp of AppState.draftPhotos) {
-            if (!dp.isExisting) {
-              newPhotoRecords.push({
+            if (!dp.isExisting || dp.isModified) {
+              photoRecordsToSave.push({
                 id: dp.id,
                 momentId: id,
                 fullBlob: dp.blob,
+                previewBlob: dp.previewBlob || dp.thumbBlob,
                 thumbBlob: dp.thumbBlob,
+                crop: dp.crop || ImageService.defaultCrop(),
                 width: 0,
                 height: 0,
                 createdAt: Date.now()
@@ -3097,7 +3819,7 @@
             createdAt: AppState.isEditing ? (AppState.activeMoment?.createdAt || Date.now()) : Date.now()
           };
 
-          await DB.saveMomentWithPhotos(momentRecord, newPhotoRecords, photoIdsToDelete);
+          await DB.saveMomentWithPhotos(momentRecord, photoRecordsToSave, photoIdsToDelete);
 
           UI.showToast('Momento salvo com carinho!');
           this.closeAllPanels();
@@ -3118,7 +3840,7 @@
     };
 
     // -------------------------------------------------------------
-    // 9. MONITOR GLOBAL DE ERROS & INICIALIZAÇÃO
+    // 10. MONITOR GLOBAL DE ERROS & INICIALIZAÇÃO
     // -------------------------------------------------------------
     window.addEventListener('unhandledrejection', (event) => {
       console.error('Promise rejeitada sem tratamento:', event.reason);
