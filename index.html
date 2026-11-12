@@ -29,7 +29,7 @@
       --bg-surface: #ffffff;
       --bg-surface-elevated: #f4f0ea;
       --bg-subtle: #eee9e0;
-      
+
       --text-main: #231f20;
       --text-muted: #6e6763;
       --text-subtle: #99908a;
@@ -74,7 +74,7 @@
       --bg-surface: #1e1b1c;
       --bg-surface-elevated: #282425;
       --bg-subtle: #332f30;
-      
+
       --text-main: #f5f2ef;
       --text-muted: #a69f9a;
       --text-subtle: #6f6864;
@@ -427,6 +427,7 @@
       cursor: pointer;
       box-shadow: var(--shadow-sm);
       transition: background-color var(--transition-fast), transform var(--transition-fast);
+      flex-shrink: 0;
     }
     .btn-icon:hover {
       background: var(--bg-surface-elevated);
@@ -767,6 +768,57 @@
       font-size: 20px;
       font-weight: 500;
     }
+
+    /* Cabeçalho Hierárquico Exclusivo do Painel de Detalhes */
+    .detail-panel-header {
+      padding: 20px 20px 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      position: relative;
+      flex-shrink: 0;
+      background: var(--bg-surface);
+    }
+    .detail-header-stack {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .detail-title {
+      font-family: var(--font-serif);
+      font-size: 25px;
+      font-weight: 500;
+      line-height: 1.2;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+      word-break: break-word;
+    }
+    .detail-date-badge {
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 500;
+      line-height: 1.35;
+      margin-top: 2px;
+    }
+    .detail-address {
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: flex-start;
+      gap: 5px;
+      line-height: 1.4;
+      margin-top: 2px;
+    }
+    .detail-address svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+      color: var(--text-subtle);
+    }
+
     .panel-body {
       flex: 1;
       overflow-y: auto;
@@ -819,29 +871,51 @@
       color: var(--text-subtle);
     }
 
-    /* Seletor & Galeria de Uploads */
+    /* =============================================================
+       MOSAICO EDITORIAL DINÂMICO (COMPARTILHADO: CRIAÇÃO & DETALHE)
+       ============================================================= */
     .photo-upload-zone {
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
-    .photo-grid-preview {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
-      gap: 8px;
+    .dynamic-mosaic {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
     }
+    .dynamic-mosaic:empty {
+      display: none;
+    }
+    .mosaic-row {
+      display: grid;
+      gap: 6px;
+      width: 100%;
+    }
+    .mosaic-row.cols-1 { grid-template-columns: 1fr; }
+    .mosaic-row.cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .mosaic-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .mosaic-row.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+    /* Itens de Preview na Criação/Edição */
     .photo-preview-item {
       position: relative;
-      aspect-ratio: 1;
+      aspect-ratio: 1 / 1;
       border-radius: var(--radius-sm);
       overflow: hidden;
       border: 1px solid var(--border-subtle);
       background: var(--bg-subtle);
+      transition: border-color var(--transition-fast);
+    }
+    .mosaic-row.cols-1 .photo-preview-item {
+      border-radius: var(--radius-md);
     }
     .photo-preview-item img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center center;
       display: block;
     }
     .photo-preview-item.is-cover {
@@ -849,25 +923,27 @@
     }
     .photo-cover-badge {
       position: absolute;
-      top: 4px;
-      left: 4px;
+      top: 6px;
+      left: 6px;
       background: var(--accent);
       color: #ffffff;
       font-size: 10px;
       font-weight: 600;
-      padding: 1px 6px;
+      padding: 2px 7px;
       border-radius: var(--radius-full);
       pointer-events: none;
       letter-spacing: 0.02em;
+      z-index: 2;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
     }
     .photo-preview-actions {
       position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, 0.45);
+      background: rgba(0, 0, 0, 0.42);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
+      gap: 6px;
       opacity: 0;
       transition: opacity var(--transition-fast);
     }
@@ -880,12 +956,12 @@
         opacity: 1;
         background: linear-gradient(to top, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0) 65%);
         align-items: flex-end;
-        padding-bottom: 5px;
+        padding-bottom: 6px;
       }
     }
     .photo-mini-btn {
-      width: 26px;
-      height: 26px;
+      width: 28px;
+      height: 28px;
       border-radius: var(--radius-full);
       background: rgba(255, 255, 255, 0.94);
       color: #231f20;
@@ -894,11 +970,70 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.22);
       transition: transform var(--transition-fast);
     }
     .photo-mini-btn:hover {
       transform: scale(1.1);
+    }
+
+    /* Itens de Preview na Visualização de Detalhes */
+    .mosaic-tile {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      cursor: zoom-in;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    .mosaic-row.cols-1 .mosaic-tile {
+      border-radius: var(--radius-md);
+    }
+    .mosaic-tile:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+    .mosaic-tile:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .mosaic-tile img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      display: block;
+      transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .mosaic-tile:hover img {
+      transform: scale(1.03);
+    }
+    .mosaic-tile-badge {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      background: rgba(20, 18, 19, 0.58);
+      backdrop-filter: blur(4px);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: var(--radius-full);
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+      pointer-events: none;
+    }
+    .mosaic-tile:hover .mosaic-tile-badge {
+      opacity: 1;
+    }
+
+    .detail-note {
+      font-size: 15px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      color: var(--text-main);
     }
 
     /* =============================================================
@@ -1019,113 +1154,6 @@
       justify-content: space-between;
       align-items: center;
       gap: 10px;
-    }
-
-    /* =============================================================
-       GALERIA EDITORIAL DINÂMICA (DETALHES DO MOMENTO)
-       ============================================================= */
-    .detail-gallery-mosaic {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      width: 100%;
-    }
-    .mosaic-row {
-      display: grid;
-      gap: 6px;
-      width: 100%;
-    }
-    .mosaic-row.cols-1 { grid-template-columns: 1fr; }
-    .mosaic-row.cols-2 { grid-template-columns: repeat(2, 1fr); }
-    .mosaic-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
-    .mosaic-row.cols-4 { grid-template-columns: repeat(4, 1fr); }
-
-    .mosaic-tile {
-      position: relative;
-      aspect-ratio: 1 / 1;
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-      background: var(--bg-subtle);
-      border: 1px solid var(--border-subtle);
-      cursor: zoom-in;
-      transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-    }
-    /* Quando há apenas 1 foto, dá destaque editorial maior mantendo proporção quadrada */
-    .mosaic-row.cols-1 .mosaic-tile {
-      border-radius: var(--radius-md);
-    }
-    .mosaic-tile:hover {
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-sm);
-    }
-    .mosaic-tile:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-    }
-    .mosaic-tile img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center center;
-      display: block;
-      transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .mosaic-tile:hover img {
-      transform: scale(1.03);
-    }
-    .mosaic-tile-badge {
-      position: absolute;
-      bottom: 6px;
-      right: 6px;
-      background: rgba(20, 18, 19, 0.58);
-      backdrop-filter: blur(4px);
-      color: #ffffff;
-      font-size: 10px;
-      font-weight: 500;
-      padding: 2px 6px;
-      border-radius: var(--radius-full);
-      opacity: 0;
-      transition: opacity var(--transition-fast);
-      pointer-events: none;
-    }
-    .mosaic-tile:hover .mosaic-tile-badge {
-      opacity: 1;
-    }
-
-    .detail-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .detail-title {
-      font-family: var(--font-serif);
-      font-size: 24px;
-      font-weight: 500;
-      line-height: 1.25;
-    }
-    .detail-date-badge {
-      font-size: 14px;
-      color: var(--accent);
-      font-weight: 500;
-    }
-    .detail-address {
-      font-size: 13px;
-      color: var(--text-muted);
-      display: flex;
-      align-items: flex-start;
-      gap: 6px;
-    }
-    .detail-address svg {
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-    .detail-note {
-      font-size: 15px;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      color: var(--text-main);
-      border-top: 1px solid var(--border-subtle);
-      padding-top: 14px;
     }
 
     /* =============================================================
@@ -1417,10 +1445,10 @@
         <input type="hidden" id="form-lat">
         <input type="hidden" id="form-lng">
 
-        <!-- Fotos -->
+        <!-- Fotos com Mosaico Editorial Dinâmico -->
         <div class="form-group photo-upload-zone">
           <label>Fotografias (até 12 fotos)</label>
-          <div id="form-photo-grid" class="photo-grid-preview"></div>
+          <div id="form-photo-grid" class="dynamic-mosaic"></div>
           <button id="btn-trigger-file" type="button" class="btn-secondary" style="width: 100%;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"/><line x1="16" y1="5" x2="22" y2="5"/><line x1="19" y1="2" x2="19" y2="8"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
@@ -1465,9 +1493,16 @@
 
     <!-- Painel Detalhe do Momento -->
     <aside id="detail-panel" class="slide-panel" aria-modal="true" role="dialog" aria-labelledby="detail-title">
-      <div class="panel-header">
+      <div class="detail-panel-header">
         <div class="panel-grabber"></div>
-        <span class="detail-date-badge" id="detail-date-text"></span>
+        <div class="detail-header-stack">
+          <h2 class="detail-title" id="detail-title"></h2>
+          <span class="detail-date-badge" id="detail-date-text"></span>
+          <div class="detail-address" id="detail-address-container">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span id="detail-address-text"></span>
+          </div>
+        </div>
         <button id="btn-close-detail" class="btn-icon" aria-label="Fechar detalhes" type="button">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 6 6 18M6 6l12 12"/>
@@ -1477,16 +1512,10 @@
 
       <div class="panel-body">
         <!-- Mosaico Editorial Dinâmico de Previews 1x1 -->
-        <div id="detail-gallery-mosaic" class="detail-gallery-mosaic" style="display: none;"></div>
+        <div id="detail-gallery-mosaic" class="dynamic-mosaic" style="display: none;"></div>
 
-        <div class="detail-meta">
-          <h2 class="detail-title" id="detail-title"></h2>
-          <div class="detail-address" id="detail-address-container">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span id="detail-address-text"></span>
-          </div>
-          <p class="detail-note" id="detail-note-text"></p>
-        </div>
+        <!-- Notas abaixo das imagens -->
+        <p class="detail-note" id="detail-note-text"></p>
       </div>
 
       <div class="panel-footer">
@@ -1636,7 +1665,7 @@
       MAX_PHOTOS_PER_MOMENT: 12,
       MAX_IMAGE_RAW_SIZE_MB: 15,
       IMAGE_MAX_DIMENSION: 1920,        // Alta resolução para visualização completa no Lightbox
-      PREVIEW_SQUARE_DIMENSION: 800,    // Alta nitidez para previews 1x1 nos detalhes do momento
+      PREVIEW_SQUARE_DIMENSION: 800,    // Alta nitidez para previews 1x1 nos detalhes e criação
       MAP_CARD_THUMB_DIMENSION: 160,    // Leve e rápido exclusivamente para os cards do mapa
       IMAGE_JPEG_QUALITY: 0.88,
       PREVIEW_JPEG_QUALITY: 0.86,
@@ -3117,9 +3146,10 @@
         this.closeAllPanels();
         AppState.activeMoment = m;
 
+        // Cabeçalho Hierárquico: Título -> Data -> Endereço
         document.getElementById('detail-title').textContent = m.name;
         document.getElementById('detail-date-text').textContent = Utils.formatDate(m.date);
-        
+
         const addrContainer = document.getElementById('detail-address-container');
         const addrText = document.getElementById('detail-address-text');
         if (m.address) {
@@ -3129,6 +3159,10 @@
           addrContainer.style.display = 'none';
         }
 
+        // Galeria em mosaico
+        await this.setupDetailMosaic(m);
+
+        // Notas abaixo das imagens
         const noteText = document.getElementById('detail-note-text');
         if (m.note) {
           noteText.textContent = m.note;
@@ -3136,8 +3170,6 @@
         } else {
           noteText.style.display = 'none';
         }
-
-        await this.setupDetailMosaic(m);
 
         document.getElementById('panel-backdrop').classList.add('active');
         document.getElementById('detail-panel').classList.add('active');
@@ -3149,7 +3181,7 @@
       // 3 -> [3]
       // 4 -> [2, 2]
       // 5 -> [3, 2]
-      // >= 6: divisível por 3 -> grupos de 3; senão divisível por 4 -> grupos de 4; senão blocos de 3 com resto equilibrado (ex: 7 -> [3, 4] ou [3, 2, 2], 10 -> [3, 3, 4], 11 -> [3, 4, 4])
+      // >= 6: divisível por 3 -> grupos de 3; senão divisível por 4 -> grupos de 4; senão blocos de 3 com resto equilibrado (ex: 7 -> [3, 4], 10 -> [3, 3, 4], 11 -> [3, 4, 4])
       computeMosaicRowCounts(total) {
         if (total <= 0) return [];
         if (total === 1) return [1];
@@ -3158,7 +3190,6 @@
         if (total === 4) return [2, 2];
         if (total === 5) return [3, 2];
 
-        // A partir de 6 fotos:
         if (total % 3 === 0) {
           return Array(total / 3).fill(3);
         }
@@ -3166,15 +3197,11 @@
           return Array(total / 4).fill(4);
         }
 
-        // Casos a partir de 6 não divisíveis nem por 3 nem por 4 (ex: 7, 10, 11):
-        // Agrupa prioritariamente em 3 e equilibra o restante sem deixar linha solitária de 1 foto
         const remainder = total % 3;
         if (remainder === 1) {
-          // Ex: 7 -> [3, 4]; 10 -> [3, 3, 4]
           const threes = Math.floor(total / 3) - 1;
           return [...Array(threes).fill(3), 4];
         }
-        // remainder === 2 (ex: 11 -> [3, 4, 4])
         const threes = Math.floor(total / 3) - 1;
         return [...Array(threes).fill(3), 4, 4];
       },
@@ -3212,7 +3239,6 @@
             tile.setAttribute('aria-label', `Ampliar foto ${index + 1} de ${photos.length}`);
 
             const img = document.createElement('img');
-            // Usa o preview 1x1 em alta nitidez (800px), caindo para fullBlob ou thumbBlob apenas se necessário
             const highResPreviewBlob = photo.previewBlob || photo.fullBlob || photo.thumbBlob;
             img.src = AppState.getObjectUrl(`${photo.id}_preview`, highResPreviewBlob);
             img.alt = `${moment.name} — foto ${index + 1}`;
@@ -3259,7 +3285,6 @@
         const prevBtn = document.getElementById('btn-lightbox-prev');
         const nextBtn = document.getElementById('btn-lightbox-next');
 
-        // Exibe a foto inteira original (sem recorte 1x1)
         const fullUrl = AppState.getObjectUrl(`${current.id}_full`, current.fullBlob);
         img.src = fullUrl;
         img.alt = `${AppState.activeMoment?.name || 'Momento'} — foto ${this.lightboxIndex + 1} de ${this.galleryPhotos.length}`;
@@ -3296,123 +3321,141 @@
         saveBtn.disabled = !isValid;
       },
 
+      // Renderiza as fotos na criação/edição seguindo exatamente a mesma regra dinâmica do mosaico de preview
       renderPhotoUploadGrid() {
         const grid = document.getElementById('form-photo-grid');
         grid.textContent = '';
 
-        if (AppState.draftPhotos.length > 0 && !AppState.draftPhotos.some((p) => p.isCover)) {
+        const total = AppState.draftPhotos.length;
+        if (total === 0) return;
+
+        if (!AppState.draftPhotos.some((p) => p.isCover)) {
           AppState.draftPhotos[0].isCover = true;
         }
 
-        AppState.draftPhotos.forEach((photo, index) => {
-          const item = document.createElement('div');
-          item.className = 'photo-preview-item' + (photo.isCover ? ' is-cover' : '');
+        const rowCounts = this.computeMosaicRowCounts(total);
+        let photoCursor = 0;
 
-          const img = document.createElement('img');
-          img.src = photo.previewUrl;
-          img.alt = `Foto ${index + 1}`;
-          item.appendChild(img);
+        rowCounts.forEach((colsCount) => {
+          const row = document.createElement('div');
+          row.className = `mosaic-row cols-${colsCount}`;
 
-          if (photo.isCover) {
-            const badge = document.createElement('span');
-            badge.className = 'photo-cover-badge';
-            badge.textContent = 'Capa';
-            item.appendChild(badge);
+          for (let c = 0; c < colsCount && photoCursor < total; c++) {
+            const index = photoCursor;
+            const photo = AppState.draftPhotos[index];
+            photoCursor++;
+
+            const item = document.createElement('div');
+            item.className = 'photo-preview-item' + (photo.isCover ? ' is-cover' : '');
+
+            const img = document.createElement('img');
+            img.src = photo.previewUrl;
+            img.alt = `Foto ${index + 1}`;
+            item.appendChild(img);
+
+            if (photo.isCover) {
+              const badge = document.createElement('span');
+              badge.className = 'photo-cover-badge';
+              badge.textContent = 'Capa';
+              item.appendChild(badge);
+            }
+
+            const actions = document.createElement('div');
+            actions.className = 'photo-preview-actions';
+
+            // Botão Enquadrar 1x1
+            const btnCrop = document.createElement('button');
+            btnCrop.type = 'button';
+            btnCrop.className = 'photo-mini-btn';
+            btnCrop.title = 'Enquadrar preview 1×1';
+            btnCrop.setAttribute('aria-label', 'Enquadrar preview 1×1');
+            const cropSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            cropSvg.setAttribute('width', '13');
+            cropSvg.setAttribute('height', '13');
+            cropSvg.setAttribute('viewBox', '0 0 24 24');
+            cropSvg.setAttribute('fill', 'none');
+            cropSvg.setAttribute('stroke', 'currentColor');
+            cropSvg.setAttribute('stroke-width', '2.2');
+            cropSvg.setAttribute('stroke-linecap', 'round');
+            cropSvg.setAttribute('stroke-linejoin', 'round');
+            const cropP1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            cropP1.setAttribute('d', 'M6 2v14a2 2 0 0 0 2 2h14');
+            const cropP2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            cropP2.setAttribute('d', 'M18 22V8a2 2 0 0 0-2-2H2');
+            cropSvg.appendChild(cropP1);
+            cropSvg.appendChild(cropP2);
+            btnCrop.appendChild(cropSvg);
+
+            btnCrop.onclick = (e) => {
+              e.stopPropagation();
+              CropController.open(index);
+            };
+
+            // Botão Definir como Capa
+            const btnCover = document.createElement('button');
+            btnCover.type = 'button';
+            btnCover.className = 'photo-mini-btn';
+            btnCover.title = 'Definir como capa';
+            btnCover.setAttribute('aria-label', 'Definir como capa');
+            const starSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            starSvg.setAttribute('width', '13');
+            starSvg.setAttribute('height', '13');
+            starSvg.setAttribute('viewBox', '0 0 24 24');
+            starSvg.setAttribute('fill', photo.isCover ? 'var(--accent)' : 'none');
+            starSvg.setAttribute('stroke', photo.isCover ? 'var(--accent)' : 'currentColor');
+            starSvg.setAttribute('stroke-width', '2');
+            const starPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            starPath.setAttribute('d', 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z');
+            starSvg.appendChild(starPath);
+            btnCover.appendChild(starSvg);
+
+            btnCover.onclick = (e) => {
+              e.stopPropagation();
+              AppState.draftPhotos.forEach((p) => { p.isCover = false; });
+              photo.isCover = true;
+              this.renderPhotoUploadGrid();
+            };
+
+            // Botão Remover Foto
+            const btnDel = document.createElement('button');
+            btnDel.type = 'button';
+            btnDel.className = 'photo-mini-btn';
+            btnDel.title = 'Remover foto';
+            btnDel.setAttribute('aria-label', 'Remover foto');
+            const trashSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            trashSvg.setAttribute('width', '13');
+            trashSvg.setAttribute('height', '13');
+            trashSvg.setAttribute('viewBox', '0 0 24 24');
+            trashSvg.setAttribute('fill', 'none');
+            trashSvg.setAttribute('stroke', 'var(--danger)');
+            trashSvg.setAttribute('stroke-width', '2.2');
+            const trashLine1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            trashLine1.setAttribute('x1', '18'); trashLine1.setAttribute('y1', '6');
+            trashLine1.setAttribute('x2', '6'); trashLine1.setAttribute('y2', '18');
+            const trashLine2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            trashLine2.setAttribute('x1', '6'); trashLine2.setAttribute('y1', '6');
+            trashLine2.setAttribute('x2', '18'); trashLine2.setAttribute('y2', '18');
+            trashSvg.appendChild(trashLine1);
+            trashSvg.appendChild(trashLine2);
+            btnDel.appendChild(trashSvg);
+
+            btnDel.onclick = (e) => {
+              e.stopPropagation();
+              AppState.draftPhotos.splice(index, 1);
+              if (photo.isCover && AppState.draftPhotos.length > 0) {
+                AppState.draftPhotos[0].isCover = true;
+              }
+              this.renderPhotoUploadGrid();
+            };
+
+            actions.appendChild(btnCrop);
+            actions.appendChild(btnCover);
+            actions.appendChild(btnDel);
+            item.appendChild(actions);
+            row.appendChild(item);
           }
 
-          const actions = document.createElement('div');
-          actions.className = 'photo-preview-actions';
-
-          // Botão Enquadrar 1x1
-          const btnCrop = document.createElement('button');
-          btnCrop.type = 'button';
-          btnCrop.className = 'photo-mini-btn';
-          btnCrop.title = 'Enquadrar preview 1×1';
-          btnCrop.setAttribute('aria-label', 'Enquadrar preview 1×1');
-          const cropSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-          cropSvg.setAttribute('width', '13');
-          cropSvg.setAttribute('height', '13');
-          cropSvg.setAttribute('viewBox', '0 0 24 24');
-          cropSvg.setAttribute('fill', 'none');
-          cropSvg.setAttribute('stroke', 'currentColor');
-          cropSvg.setAttribute('stroke-width', '2.2');
-          cropSvg.setAttribute('stroke-linecap', 'round');
-          cropSvg.setAttribute('stroke-linejoin', 'round');
-          const cropP1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          cropP1.setAttribute('d', 'M6 2v14a2 2 0 0 0 2 2h14');
-          const cropP2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          cropP2.setAttribute('d', 'M18 22V8a2 2 0 0 0-2-2H2');
-          cropSvg.appendChild(cropP1);
-          cropSvg.appendChild(cropP2);
-          btnCrop.appendChild(cropSvg);
-
-          btnCrop.onclick = (e) => {
-            e.stopPropagation();
-            CropController.open(index);
-          };
-
-          // Botão Definir como Capa
-          const btnCover = document.createElement('button');
-          btnCover.type = 'button';
-          btnCover.className = 'photo-mini-btn';
-          btnCover.title = 'Definir como capa';
-          btnCover.setAttribute('aria-label', 'Definir como capa');
-          const starSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-          starSvg.setAttribute('width', '13');
-          starSvg.setAttribute('height', '13');
-          starSvg.setAttribute('viewBox', '0 0 24 24');
-          starSvg.setAttribute('fill', photo.isCover ? 'var(--accent)' : 'none');
-          starSvg.setAttribute('stroke', photo.isCover ? 'var(--accent)' : 'currentColor');
-          starSvg.setAttribute('stroke-width', '2');
-          const starPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          starPath.setAttribute('d', 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z');
-          starSvg.appendChild(starPath);
-          btnCover.appendChild(starSvg);
-
-          btnCover.onclick = (e) => {
-            e.stopPropagation();
-            AppState.draftPhotos.forEach((p) => { p.isCover = false; });
-            photo.isCover = true;
-            this.renderPhotoUploadGrid();
-          };
-
-          // Botão Remover Foto
-          const btnDel = document.createElement('button');
-          btnDel.type = 'button';
-          btnDel.className = 'photo-mini-btn';
-          btnDel.title = 'Remover foto';
-          btnDel.setAttribute('aria-label', 'Remover foto');
-          const trashSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-          trashSvg.setAttribute('width', '13');
-          trashSvg.setAttribute('height', '13');
-          trashSvg.setAttribute('viewBox', '0 0 24 24');
-          trashSvg.setAttribute('fill', 'none');
-          trashSvg.setAttribute('stroke', 'var(--danger)');
-          trashSvg.setAttribute('stroke-width', '2.2');
-          const trashLine1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-          trashLine1.setAttribute('x1', '18'); trashLine1.setAttribute('y1', '6');
-          trashLine1.setAttribute('x2', '6'); trashLine1.setAttribute('y2', '18');
-          const trashLine2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-          trashLine2.setAttribute('x1', '6'); trashLine2.setAttribute('y1', '6');
-          trashLine2.setAttribute('x2', '18'); trashLine2.setAttribute('y2', '18');
-          trashSvg.appendChild(trashLine1);
-          trashSvg.appendChild(trashLine2);
-          btnDel.appendChild(trashSvg);
-
-          btnDel.onclick = (e) => {
-            e.stopPropagation();
-            AppState.draftPhotos.splice(index, 1);
-            if (photo.isCover && AppState.draftPhotos.length > 0) {
-              AppState.draftPhotos[0].isCover = true;
-            }
-            this.renderPhotoUploadGrid();
-          };
-
-          actions.appendChild(btnCrop);
-          actions.appendChild(btnCover);
-          actions.appendChild(btnDel);
-          item.appendChild(actions);
-          grid.appendChild(item);
+          grid.appendChild(row);
         });
       },
 
